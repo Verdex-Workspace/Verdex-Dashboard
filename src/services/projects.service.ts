@@ -13,6 +13,7 @@ import type {
 } from '@/types'
 import { TOOLS, TOOL_DETAILS } from '@/data/mock/projects'
 import { supabase } from '@/lib/supabase'
+import { fetchGithubDetail } from '@/services/github.service'
 
 /**
  * Service du module Projets & Outils.
@@ -37,6 +38,7 @@ interface ToolRow {
   icon: string
   open_prs: number
   open_issues: number
+  repo: string | null
 }
 
 interface ToolDetailRow {
@@ -63,6 +65,7 @@ function rowToTool(r: ToolRow): Tool {
     icon: r.icon,
     openPrs: r.open_prs,
     openIssues: r.open_issues,
+    repo: r.repo,
   }
 }
 
@@ -89,7 +92,7 @@ export async function fetchTools(_clientId: string): Promise<Tool[]> {
   return (data as ToolRow[]).map(rowToTool)
 }
 
-export async function fetchToolDetail(toolId: string): Promise<ToolDetail | null> {
+async function baseDetail(toolId: string): Promise<ToolDetail | null> {
   if (!supabase) return delay(TOOL_DETAILS[toolId] ?? null)
   const { data, error } = await supabase
     .from('tool_details')
@@ -98,4 +101,33 @@ export async function fetchToolDetail(toolId: string): Promise<ToolDetail | null
     .maybeSingle()
   if (error || !data) return TOOL_DETAILS[toolId] ?? null
   return rowToDetail(data as ToolDetailRow)
+}
+
+export async function fetchToolDetail(
+  toolId: string,
+  repo?: string | null,
+): Promise<ToolDetail | null> {
+  const base = await baseDetail(toolId)
+
+  // Enrichissement par les données GitHub réelles si un dépôt est lié.
+  if (repo) {
+    const gh = await fetchGithubDetail(repo)
+    if (gh) {
+      return {
+        id: toolId,
+        port: base?.port ?? 0,
+        description: gh.description ?? base?.description ?? '',
+        metrics: base?.metrics ?? [],
+        dependencies: base?.dependencies ?? [],
+        links: base?.links ?? [],
+        commits: gh.commits.length ? gh.commits : (base?.commits ?? []),
+        pullRequests: gh.pullRequests.length ? gh.pullRequests : (base?.pullRequests ?? []),
+        issues: gh.issues.length ? gh.issues : (base?.issues ?? []),
+        deployments: gh.deployments.length ? gh.deployments : (base?.deployments ?? []),
+        readme: gh.readme,
+      }
+    }
+  }
+
+  return base
 }
