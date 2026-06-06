@@ -400,3 +400,51 @@ export interface InfraData {
   compose: string[]
   scripts: ScriptGroup[]
 }
+
+/* ============================================================
+   Module Proton Unlimited (remontées en lecture seule)
+   ============================================================ */
+
+export interface MailItem {
+  id: string
+  subject: string
+  time: string
+  unread: boolean
+}
+
+export interface CalendarEvent {
+  id: string
+  time: string
+  title: string
+  kind: StatusKind
+}
+
+export interface AuthCode {
+  id: string
+  service: string
+  code: string
+}
+
+export interface DriveFile {
+  id: string
+  name: string
+  size: string
+}
+
+export interface DocItem {
+  id: string
+  name: string
+  kind: 'Doc' | 'Sheet'
+  when: string
+}
+
+/** Données du module Proton Unlimited. */
+export interface ProtonData {
+  kpis: Kpi[]
+  mail: { unread: number; items: MailItem[] }
+  calendar: CalendarEvent[]
+  pass: { count: number; reused: number; weak: number }
+  auth: AuthCode[]
+  drive: DriveFile[]
+  docs: DocItem[]
+}
