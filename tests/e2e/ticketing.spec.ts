@@ -4,7 +4,7 @@ test.describe('Ticketing', () => {
   test("affiche le Kanban et ouvre le détail d'un ticket", async ({ page }) => {
     await page.goto('/ticketing')
     await expect(page.getByRole('heading', { name: /Tickets/ })).toBeVisible()
-    await expect(page.getByText('Backlog')).toBeVisible()
+    await expect(page.getByText('Backlog', { exact: true })).toBeVisible()
 
     await page.locator('.wbox.clickable').first().click()
     const panel = page.locator('.sover.show')
