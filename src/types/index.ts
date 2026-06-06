@@ -150,3 +150,34 @@ export interface ToolDetail {
   issues: Issue[]
   deployments: Deployment[]
 }
+
+/* ============================================================
+   Module Logs & Métriques
+   ============================================================ */
+
+export type LogLevel = 'ERROR' | 'WARN' | 'INFO' | 'DEBUG'
+
+/** Ligne de log agrégée. */
+export interface LogEntry {
+  id: string
+  time: string
+  level: LogLevel
+  source: string
+  message: string
+}
+
+/** Mini graphe d'observabilité (carte). */
+export interface MetricChart {
+  key: string
+  source: string
+  /** true = courbe « saine » (accent), false = anormale */
+  healthy: boolean
+}
+
+/** Données du module Logs & Métriques. */
+export interface LogsData {
+  sources: string[]
+  kpis: Kpi[]
+  charts: MetricChart[]
+  entries: LogEntry[]
+}
