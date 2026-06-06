@@ -1,0 +1,23 @@
+name: Release
+
+# Gère le versioning et le CHANGELOG automatiquement à partir des
+# commits conventionnels. release-please ouvre une PR de release ;
+# une fois mergée, il crée le tag et la GitHub Release.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    name: Préparation de la release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

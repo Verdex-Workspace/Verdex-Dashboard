@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation Verdex
+    url: https://github.com/Verdex-Workspace/Verdex-Dashboard/tree/main/docs
+    about: Consultez la documentation avant d'ouvrir une issue.

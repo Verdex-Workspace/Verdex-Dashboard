@@ -1,0 +1,32 @@
+name: ✨ Demande de fonctionnalité
+description: Proposer une amélioration ou une nouvelle fonctionnalité
+title: 'feat: '
+labels: ['enhancement', 'triage']
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problème / besoin
+      description: Quel besoin cette fonctionnalité adresse-t-elle ?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solution proposée
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives envisagées
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priorité suggérée
+      options:
+        - P1 — critique
+        - P2 — important
+        - P3 — confort
+    validations:
+      required: true

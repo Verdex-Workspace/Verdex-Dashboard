@@ -1,0 +1,326 @@
+/* ============================================================
+   Verdex Design System — primitives UI
+   Portage des composants "sketchy" du design vers des classes
+   réutilisables, consommées par les composants Vue de src/components/ui.
+   ============================================================ */
+@layer components {
+  /* ---------- sheet (page) helpers ---------- */
+  .sheet {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .sheet-h h1 {
+    font-size: 27px;
+    margin: 0;
+    letter-spacing: -0.01em;
+    font-weight: 700;
+  }
+  .sheet-h .desc {
+    color: var(--muted);
+    font-size: 13.5px;
+    margin-top: 6px;
+    max-width: 760px;
+    line-height: 1.5;
+  }
+  .sheet-h .badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--accent-dim);
+    border-radius: 999px;
+    padding: 3px 10px;
+    margin-bottom: 12px;
+  }
+  .divider {
+    height: 1px;
+    background: var(--line-2);
+    margin: 22px 0 24px;
+  }
+
+  /* ---------- frame ---------- */
+  .frame {
+    background: var(--paper);
+    border: 2px solid var(--line);
+    border-radius: 14px 16px 13px 16px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    position: relative;
+  }
+  .frame-cap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 2px 9px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .frame-cap .tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    background: var(--accent);
+    border-radius: 6px;
+    padding: 2px 7px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .frame-cap .tag.ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--line);
+  }
+  .frame-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px dashed var(--line);
+    background: var(--paper2);
+  }
+  .frame-bar .ttl {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+  .frame-bar .dots {
+    display: flex;
+    gap: 5px;
+  }
+  .frame-bar .dots i {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--line);
+    display: block;
+  }
+  .frame-body {
+    padding: 14px;
+  }
+
+  /* ---------- box ---------- */
+  .wbox {
+    background: var(--fill);
+    border: 1.5px solid var(--line);
+    border-radius: 9px 11px 8px 12px;
+    position: relative;
+  }
+  .wbox.dash {
+    border-style: dashed;
+  }
+  .wbox.plain {
+    background: var(--paper2);
+  }
+  .wlabel {
+    position: absolute;
+    top: 7px;
+    left: 10px;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .clickable {
+    cursor: pointer;
+    transition:
+      transform 0.15s,
+      border-color 0.2s,
+      box-shadow 0.2s;
+  }
+  .clickable:hover {
+    border-color: var(--accent-dim);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 12%, transparent);
+  }
+
+  /* ---------- bars (skeleton lines / placeholders) ---------- */
+  .bar {
+    height: 9px;
+    border-radius: 5px;
+    background: var(--line);
+    opacity: 0.85;
+  }
+  .bar.sm {
+    height: 7px;
+  }
+  .bar.dk {
+    background: var(--ink);
+    opacity: 0.32;
+  }
+  .bar.ac {
+    background: var(--accent);
+    opacity: 0.7;
+  }
+  .bars {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  /* ---------- chip ---------- */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 3px 9px;
+    color: var(--ink);
+    background: var(--paper2);
+    white-space: nowrap;
+  }
+  .chip .d {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+  .chip.ok {
+    border-color: color-mix(in oklab, var(--accent) 50%, var(--line));
+  }
+  .chip.ok .d {
+    background: var(--accent);
+  }
+  .chip.warn .d {
+    background: var(--warn);
+  }
+  .chip.err .d {
+    background: var(--err);
+  }
+  .chip.info .d {
+    background: var(--info);
+  }
+
+  /* ---------- icon box ---------- */
+  .icbox {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: var(--fill-2);
+    border: 1.5px solid var(--line);
+    display: grid;
+    place-items: center;
+    font-size: 15px;
+    flex: none;
+  }
+
+  /* ---------- buttons ---------- */
+  .btnw {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    border: 1.5px solid var(--line);
+    border-radius: 9px;
+    padding: 6px 12px;
+    background: var(--paper2);
+    color: var(--ink);
+    cursor: pointer;
+    transition:
+      filter 0.15s,
+      border-color 0.2s;
+  }
+  .btnw:hover {
+    border-color: var(--accent-dim);
+  }
+  .btnw.pri {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+  .btnw.pri:hover {
+    filter: brightness(1.05);
+  }
+
+  /* ---------- tabs ---------- */
+  .tabsw {
+    display: inline-flex;
+    gap: 4px;
+    background: var(--fill);
+    border: 1.5px solid var(--line);
+    border-radius: 11px;
+    padding: 4px;
+  }
+  .tabsw button {
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.18s;
+  }
+  .tabsw button.on {
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow: 0 1px 0 var(--line);
+  }
+
+  /* ---------- spark ---------- */
+  .spark {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 34px;
+  }
+  .spark i {
+    flex: 1;
+    background: var(--line);
+    border-radius: 3px 3px 0 0;
+    display: block;
+  }
+  .spark.ac i {
+    background: color-mix(in oklab, var(--accent) 55%, var(--line));
+  }
+
+  /* ---------- misc ---------- */
+  .gridbg {
+    background-image:
+      linear-gradient(var(--line-2) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-2) 1px, transparent 1px);
+    background-size: 26px 26px;
+    background-position: -1px -1px;
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--muted);
+  }
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+  }
+  .grid3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 18px;
+  }
+  @media (max-width: 1080px) {
+    .grid3 {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 760px) {
+    .grid2,
+    .grid3 {
+      grid-template-columns: 1fr;
+    }
+  }
+}
