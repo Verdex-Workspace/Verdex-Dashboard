@@ -46,6 +46,7 @@ export const TOOLS: Tool[] = [
     icon: '◎',
     openPrs: 1,
     openIssues: 2,
+    repo: 'Verdex-Workspace/Verdex-Dashboard',
   },
   {
     id: 'scraper',

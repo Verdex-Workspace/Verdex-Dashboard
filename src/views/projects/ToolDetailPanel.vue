@@ -26,7 +26,7 @@ const tabs = computed(() => [
 const tab = ref('apercu')
 
 onMounted(async () => {
-  detail.value = await fetchToolDetail(props.tool.id)
+  detail.value = await fetchToolDetail(props.tool.id, props.tool.repo)
   loading.value = false
 })
 </script>
@@ -95,16 +95,37 @@ onMounted(async () => {
       </div>
 
       <!-- README -->
-      <VFrame v-else-if="tab === 'readme'" cap="README.md" tag="markdown">
-        <VBar w="55%" variant="dk" />
-        <div style="height: 12px" />
-        <VBars :widths="['100%', '96%', '88%']" />
-        <div style="height: 14px" />
-        <VBox plain label="bloc de code" :min-height="70" style="padding: 22px 12px">
-          <VBars :widths="['70%', '50%', '62%']" sm variant="ac" />
-        </VBox>
-        <div style="height: 12px" />
-        <VBars :widths="['92%', '80%']" />
+      <VFrame
+        v-else-if="tab === 'readme'"
+        cap="README.md"
+        :tag="detail.readme ? 'GitHub' : 'markdown'"
+      >
+        <pre
+          v-if="detail.readme"
+          class="mono"
+          style="
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-size: 11.5px;
+            line-height: 1.55;
+            margin: 0;
+            color: var(--ink);
+            max-height: 60vh;
+            overflow: auto;
+          "
+          >{{ detail.readme }}</pre
+        >
+        <template v-else>
+          <VBar w="55%" variant="dk" />
+          <div style="height: 12px" />
+          <VBars :widths="['100%', '96%', '88%']" />
+          <div style="height: 14px" />
+          <VBox plain label="bloc de code" :min-height="70" style="padding: 22px 12px">
+            <VBars :widths="['70%', '50%', '62%']" sm variant="ac" />
+          </VBox>
+          <div style="height: 12px" />
+          <VBars :widths="['92%', '80%']" />
+        </template>
       </VFrame>
 
       <!-- Commits -->

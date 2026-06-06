@@ -18,6 +18,7 @@ export default defineConfigWithVueTs(
     '**/dist-ssr/**',
     '**/coverage/**',
     '**/docs/**',
+    '**/api/**',
     '**/playwright-report/**',
     '**/test-results/**',
   ]),

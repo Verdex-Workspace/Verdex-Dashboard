@@ -87,6 +87,8 @@ export interface Tool {
   /** nombre de PR ouvertes / issues ouvertes (résumé carte) */
   openPrs: number
   openIssues: number
+  /** dépôt GitHub lié, au format "owner/name" (active les données réelles) */
+  repo?: string | null
 }
 
 /** Dépendance d'un outil. */
@@ -151,6 +153,8 @@ export interface ToolDetail {
   pullRequests: PullRequest[]
   issues: Issue[]
   deployments: Deployment[]
+  /** README brut (markdown) si remonté depuis GitHub */
+  readme?: string | null
 }
 
 /* ============================================================
