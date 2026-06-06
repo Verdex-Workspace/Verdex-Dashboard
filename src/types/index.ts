@@ -26,6 +26,8 @@ export interface NavItem {
 
 export interface NavGroup {
   group: string
+  /** clé i18n du groupe (navGroup.<key>) */
+  key: string
   items: NavItem[]
 }
 

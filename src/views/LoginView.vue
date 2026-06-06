@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { VButton } from '@/components/ui'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const { t } = useI18n()
 const auth = useAuthStore()
 
 const email = ref('')
@@ -19,7 +21,7 @@ async function submit() {
     await auth.signInWithPassword(email.value, password.value)
     router.push({ name: 'overview' })
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Échec de la connexion.'
+    error.value = e instanceof Error ? e.message : t('login.errorGeneric')
   } finally {
     loading.value = false
   }
@@ -30,7 +32,7 @@ async function github() {
   try {
     await auth.signInWithGitHub()
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Échec de la connexion GitHub.'
+    error.value = e instanceof Error ? e.message : t('login.errorGithub')
   }
 }
 
@@ -69,16 +71,16 @@ const inputStyle =
               letter-spacing: 0.16em;
               text-transform: uppercase;
             "
-            >dashboard</small
+            >{{ t('brand.tagline') }}</small
           >
         </div>
       </div>
 
       <div class="frame">
         <div class="frame-body" style="padding: 22px">
-          <h1 style="font-size: 18px; margin: 0 0 4px">Connexion</h1>
+          <h1 style="font-size: 18px; margin: 0 0 4px">{{ t('login.title') }}</h1>
           <p class="desc" style="color: var(--muted); font-size: 12.5px; margin: 0 0 18px">
-            Accédez à votre cockpit Verdex.
+            {{ t('login.subtitle') }}
           </p>
 
           <form style="display: flex; flex-direction: column; gap: 12px" @submit.prevent="submit">
@@ -91,7 +93,7 @@ const inputStyle =
                   letter-spacing: 0.08em;
                   text-transform: uppercase;
                 "
-                >Email</span
+                >{{ t('login.email') }}</span
               >
               <input
                 v-model="email"
@@ -110,7 +112,7 @@ const inputStyle =
                   letter-spacing: 0.08em;
                   text-transform: uppercase;
                 "
-                >Mot de passe</span
+                >{{ t('login.password') }}</span
               >
               <input
                 v-model="password"
@@ -131,7 +133,7 @@ const inputStyle =
               :disabled="loading"
               style="justify-content: center; padding: 10px"
             >
-              {{ loading ? 'Connexion…' : 'Se connecter' }}
+              {{ loading ? t('login.signingIn') : t('login.signIn') }}
             </button>
           </form>
 
@@ -145,18 +147,18 @@ const inputStyle =
             "
           >
             <span style="flex: 1; height: 1px; background: var(--line-2)" />
-            <span class="mono" style="font-size: 10px">ou</span>
+            <span class="mono" style="font-size: 10px">{{ t('login.or') }}</span>
             <span style="flex: 1; height: 1px; background: var(--line-2)" />
           </div>
 
           <VButton style="width: 100%; justify-content: center; padding: 10px" @click="github">
-            Continuer avec GitHub
+            {{ t('login.github') }}
           </VButton>
         </div>
       </div>
 
       <p class="mono" style="font-size: 10px; color: var(--muted); text-align: center">
-        Accès réservé — Verdex Workspace.
+        {{ t('login.restricted') }}
       </p>
     </div>
   </div>
