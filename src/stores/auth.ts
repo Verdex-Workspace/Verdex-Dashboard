@@ -15,7 +15,16 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => demoMode || session.value !== null)
   const displayName = computed(
-    () => user.value?.email ?? user.value?.user_metadata?.full_name ?? 'Mode démo',
+    () => user.value?.user_metadata?.full_name ?? user.value?.email ?? 'Mode démo',
+  )
+  const email = computed(() => user.value?.email ?? null)
+  /** Fournisseur d'authentification : 'github', 'email', ou 'demo'. */
+  const provider = computed<string>(() => {
+    if (demoMode) return 'demo'
+    return (user.value?.app_metadata?.provider as string | undefined) ?? 'email'
+  })
+  const avatarUrl = computed<string | null>(
+    () => (user.value?.user_metadata?.avatar_url as string | undefined) ?? null,
   )
 
   /** Initialise la session et écoute les changements d'état d'auth. */
@@ -56,6 +65,12 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
   }
 
+  async function updatePassword(newPassword: string) {
+    if (!supabase) throw new Error('Supabase non configuré')
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) throw error
+  }
+
   return {
     user,
     session,
@@ -63,9 +78,13 @@ export const useAuthStore = defineStore('auth', () => {
     demoMode,
     isAuthenticated,
     displayName,
+    email,
+    provider,
+    avatarUrl,
     init,
     signInWithPassword,
     signInWithGitHub,
     signOut,
+    updatePassword,
   }
 })
