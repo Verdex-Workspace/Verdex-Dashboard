@@ -1,30 +1,23 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
-import { useRouter } from 'vue-router'
 import { NAV } from '@/data/navigation'
 import { useUiStore } from '@/stores/ui'
-import { useAuthStore } from '@/stores/auth'
+import UserMenu from './UserMenu.vue'
 import type { Client } from '@/types'
 
 const route = useRoute()
-const router = useRouter()
+const { t } = useI18n()
 const ui = useUiStore()
 const { clients, activeClient, sidebarOpen } = storeToRefs(ui)
-const auth = useAuthStore()
-const { demoMode, displayName } = storeToRefs(auth)
 
 const clientMenuOpen = ref(false)
 
 function pickClient(client: Client) {
   ui.selectClient(client)
   clientMenuOpen.value = false
-}
-
-async function logout() {
-  await auth.signOut()
-  router.push({ name: 'login' })
 }
 </script>
 
@@ -34,7 +27,7 @@ async function logout() {
       <span class="glyph">V</span>
       <div>
         <b>Verdex</b>
-        <small>dashboard</small>
+        <small>{{ t('brand.tagline') }}</small>
       </div>
     </div>
 
@@ -62,8 +55,8 @@ async function logout() {
     </div>
 
     <div class="navscroll">
-      <div v-for="g in NAV" :key="g.group">
-        <div class="navgrp">{{ g.group }}</div>
+      <div v-for="g in NAV" :key="g.key">
+        <div class="navgrp">{{ t(`navGroup.${g.key}`) }}</div>
         <RouterLink
           v-for="it in g.items"
           :key="it.id"
@@ -73,69 +66,13 @@ async function logout() {
           @click="ui.closeSidebar()"
         >
           <span class="ic">{{ it.icon }}</span>
-          {{ it.label }}
+          {{ t(`nav.${it.id}`) }}
           <span v-if="it.shortcut" class="kx">{{ it.shortcut }}</span>
         </RouterLink>
       </div>
     </div>
 
-    <!-- Pied : utilisateur / déconnexion -->
-    <div
-      style="
-        border-top: 1px solid var(--line-2);
-        padding: 10px 14px;
-        display: flex;
-        align-items: center;
-        gap: 9px;
-      "
-    >
-      <span
-        class="mono"
-        style="
-          width: 24px;
-          height: 24px;
-          border-radius: 7px;
-          background: var(--fill-2);
-          display: grid;
-          place-items: center;
-          font-size: 11px;
-          flex: none;
-        "
-      >
-        {{ demoMode ? '★' : displayName.charAt(0).toUpperCase() }}
-      </span>
-      <span
-        class="mono"
-        style="
-          flex: 1;
-          min-width: 0;
-          font-size: 10.5px;
-          color: var(--muted);
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        "
-        :title="displayName"
-        >{{ displayName }}</span
-      >
-      <button
-        v-if="!demoMode"
-        type="button"
-        class="mono"
-        style="
-          border: 1px solid var(--line-2);
-          background: var(--paper);
-          color: var(--ink);
-          border-radius: 8px;
-          padding: 4px 8px;
-          cursor: pointer;
-          font-size: 10px;
-        "
-        title="Se déconnecter"
-        @click="logout"
-      >
-        ⏻
-      </button>
-    </div>
+    <!-- Menu utilisateur (avatar + options) -->
+    <UserMenu />
   </nav>
 </template>
