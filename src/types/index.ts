@@ -55,8 +55,8 @@ export interface AutomationRun {
   last: string
 }
 
-/** Ticket (résumé). */
-export interface Ticket {
+/** Ticket urgent (résumé affiché sur la Vue d'ensemble). */
+export interface UrgentTicket {
   id: string
   title: string
   priority: 'P1' | 'P2' | 'P3'
@@ -180,4 +180,89 @@ export interface LogsData {
   kpis: Kpi[]
   charts: MetricChart[]
   entries: LogEntry[]
+}
+
+/* ============================================================
+   Module Ticketing (style GitHub Projects)
+   ============================================================ */
+
+export type TicketType = 'bug' | 'feature' | 'perf' | 'chore'
+export type TicketPriority = 'P1' | 'P2' | 'P3'
+export type TicketStatus = 'backlog' | 'todo' | 'in_progress' | 'review' | 'done'
+
+/** Personne assignable à un ticket. */
+export interface Assignee {
+  id: string
+  name: string
+  initials: string
+}
+
+/** Étiquette de ticket. */
+export interface Label {
+  id: string
+  name: string
+  kind: StatusKind
+}
+
+/** Référence légère vers une PR ou une issue liée. */
+export interface LinkedRef {
+  id: string
+  label: string
+}
+
+/**
+ * Ticket — entité centrale, fortement reliée (outil/repo, client, assigné,
+ * type, priorité, effort, deadline, PR/issues liées…).
+ */
+export interface Ticket {
+  id: string
+  ref: number
+  title: string
+  description: string
+  type: TicketType
+  priority: TicketPriority
+  status: TicketStatus
+  /** charge estimée en points */
+  effort: number
+  /** impact 0-100 (axe de la matrice de priorisation) */
+  impact: number
+  toolId: string | null
+  clientId: string
+  assigneeId: string | null
+  labels: Label[]
+  /** échéance ISO (YYYY-MM-DD) — alimente la charge & la future synchro Calendar */
+  deadline: string | null
+  sprint: string | null
+  linkedPrs: LinkedRef[]
+  linkedIssues: LinkedRef[]
+  createdAt: string
+  updatedAt: string
+}
+
+/** Élément de roadmap (barre sur un axe de mois). */
+export interface RoadmapItem {
+  id: string
+  label: string
+  startMonth: number
+  span: number
+  kind: StatusKind
+}
+
+/** Tâche de diagramme de Gantt (barre sur un axe de semaines). */
+export interface GanttTask {
+  id: string
+  label: string
+  startWeek: number
+  span: number
+  critical: boolean
+}
+
+/** Données du module Ticketing. */
+export interface TicketingData {
+  tickets: Ticket[]
+  assignees: Assignee[]
+  roadmap: RoadmapItem[]
+  gantt: GanttTask[]
+  months: string[]
+  weeks: string[]
 }
