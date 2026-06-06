@@ -7,6 +7,7 @@ import type { Client, NavGroup } from '@/types'
 export const NAV: NavGroup[] = [
   {
     group: 'Pilotage',
+    key: 'pilotage',
     items: [
       { id: 'overview', icon: '◎', label: "Vue d'ensemble", shortcut: 'G H' },
       { id: 'projects', icon: '▤', label: 'Projets & Outils', shortcut: 'G P' },
@@ -15,6 +16,7 @@ export const NAV: NavGroup[] = [
   },
   {
     group: 'Observabilité',
+    key: 'observability',
     items: [
       { id: 'logs', icon: '≋', label: 'Logs & Métriques', shortcut: 'G L' },
       { id: 'automations', icon: '⌬', label: 'Automations', shortcut: 'G A' },
@@ -22,6 +24,7 @@ export const NAV: NavGroup[] = [
   },
   {
     group: 'Delivery',
+    key: 'delivery',
     items: [
       { id: 'ticketing', icon: '◧', label: 'Ticketing', shortcut: 'G T' },
       { id: 'admin', icon: '⚙', label: 'Admin / Infra', shortcut: 'G I' },
@@ -29,6 +32,7 @@ export const NAV: NavGroup[] = [
   },
   {
     group: 'Sécurité & Outils',
+    key: 'security',
     items: [
       { id: 'cyber', icon: '⛨', label: 'Cybersécurité', shortcut: 'G S' },
       { id: 'proton', icon: '✦', label: 'Proton Unlimited', shortcut: 'G U' },
