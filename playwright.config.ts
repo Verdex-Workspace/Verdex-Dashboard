@@ -14,6 +14,8 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:4173',
     trace: 'on-first-retry',
+    // Thème initial déterministe (sinon dépend de la préférence du runner CI).
+    colorScheme: 'dark',
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
