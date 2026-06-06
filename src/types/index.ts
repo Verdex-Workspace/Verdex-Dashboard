@@ -266,3 +266,54 @@ export interface TicketingData {
   months: string[]
   weeks: string[]
 }
+
+/* ============================================================
+   Module Cybersécurité (pipeline d'audit)
+   ============================================================ */
+
+/** Document/source ingéré pour l'audit. */
+export interface AuditSource {
+  id: string
+  name: string
+  /** ok = indexé · warn = sensible */
+  status: StatusKind
+  statusLabel: string
+}
+
+/** Contrôle du périmètre d'audit. */
+export interface AuditCheck {
+  id: string
+  label: string
+  enabled: boolean
+}
+
+/** Indicateur de score de l'audit. */
+export interface AuditScore {
+  key: string
+  value: string
+  kind: StatusKind
+}
+
+/** Vulnérabilité détectée (priorisée par CVSS). */
+export interface Vulnerability {
+  id: string
+  /** err = critique · warn = élevée · info = moyenne · neutral = faible */
+  severity: StatusKind
+  severityLabel: string
+  cvss: string
+  finding: string
+  component: string
+  /** anatomie du finding (slide-over) */
+  why: string
+  how: string
+  benefits: string[]
+}
+
+/** Données du module Cybersécurité. */
+export interface AuditData {
+  sources: AuditSource[]
+  questions: string[]
+  checks: AuditCheck[]
+  scores: AuditScore[]
+  vulnerabilities: Vulnerability[]
+}
