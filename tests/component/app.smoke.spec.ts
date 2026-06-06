@@ -3,6 +3,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import App from '@/App.vue'
 import { router } from '@/router'
+import { i18n } from '@/i18n'
 
 describe('App (smoke)', () => {
   it("monte le shell et la vue d'ensemble sans erreur", async () => {
@@ -13,7 +14,7 @@ describe('App (smoke)', () => {
     router.push('/')
     await router.isReady()
 
-    const wrapper = mount(App, { global: { plugins: [pinia, router] } })
+    const wrapper = mount(App, { global: { plugins: [pinia, router, i18n] } })
     await flushPromises()
 
     // Shell présent (mode démo → pas de redirection vers /login)
@@ -30,7 +31,7 @@ describe('App (smoke)', () => {
     await router.push('/projects')
     await router.isReady()
 
-    const wrapper = mount(App, { global: { plugins: [pinia, router] } })
+    const wrapper = mount(App, { global: { plugins: [pinia, router, i18n] } })
     await flushPromises()
 
     expect(wrapper.text()).toContain('Projets & Outils')

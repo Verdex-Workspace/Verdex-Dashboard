@@ -27,3 +27,19 @@ describe('useAuthStore (mode démo)', () => {
     expect(auth.user).toBeNull()
   })
 })
+
+describe('useAuthStore — provider & mot de passe (mode démo)', () => {
+  beforeEach(() => setActivePinia(createPinia()))
+
+  it("expose le provider 'demo' et un avatar nul", () => {
+    const auth = useAuthStore()
+    expect(auth.provider).toBe('demo')
+    expect(auth.avatarUrl).toBeNull()
+    expect(auth.email).toBeNull()
+  })
+
+  it('updatePassword lève hors Supabase', async () => {
+    const auth = useAuthStore()
+    await expect(auth.updatePassword('motdepasse123')).rejects.toThrow()
+  })
+})
