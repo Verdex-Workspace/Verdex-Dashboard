@@ -1,0 +1,23 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "node",
+  "packages": {
+    ".": {
+      "package-name": "verdex-dashboard",
+      "changelog-path": "CHANGELOG.md",
+      "include-component-in-tag": false
+    }
+  },
+  "changelog-sections": [
+    { "type": "feat", "section": "✨ Fonctionnalités" },
+    { "type": "fix", "section": "🐛 Corrections" },
+    { "type": "perf", "section": "⚡ Performance" },
+    { "type": "refactor", "section": "♻️ Refactorisation" },
+    { "type": "docs", "section": "📝 Documentation" },
+    { "type": "build", "section": "📦 Build & dépendances" },
+    { "type": "ci", "section": "🤖 CI/CD" },
+    { "type": "test", "section": "✅ Tests", "hidden": true },
+    { "type": "style", "section": "💄 Style", "hidden": true },
+    { "type": "chore", "section": "🧹 Divers", "hidden": true }
+  ]
+}

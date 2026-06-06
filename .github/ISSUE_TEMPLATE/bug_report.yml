@@ -1,0 +1,50 @@
+name: 🐛 Rapport de bug
+description: Signaler un dysfonctionnement du Verdex Dashboard
+title: 'fix: '
+labels: ['bug', 'triage']
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Décrivez clairement le problème rencontré.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Étapes de reproduction
+      placeholder: |
+        1. Aller sur '...'
+        2. Cliquer sur '...'
+        3. Observer l'erreur
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportement attendu
+    validations:
+      required: true
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module concerné
+      options:
+        - Vue d'ensemble
+        - Projets & Outils
+        - Performance & Gains
+        - Logs & Métriques
+        - Automations
+        - Ticketing
+        - Admin / Infra
+        - Cybersécurité
+        - Proton Unlimited
+        - Autre / shell
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environnement
+      placeholder: 'navigateur, OS, env (dev/staging/prod)'
