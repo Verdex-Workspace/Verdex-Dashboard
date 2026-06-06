@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 /**
  * Routes des modules du dashboard. Les `name` correspondent aux `id` de la
@@ -6,6 +7,12 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
  * Les vues sont chargées à la demande (code-splitting).
  */
 const routes: RouteRecordRaw[] = [
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('@/views/LoginView.vue'),
+    meta: { blank: true, public: true },
+  },
   { path: '/', redirect: '/overview' },
   {
     path: '/overview',
@@ -65,4 +72,23 @@ export const router = createRouter({
   scrollBehavior() {
     return { top: 0 }
   },
+})
+
+/**
+ * Garde d'authentification. En mode démo (Supabase non configuré), tout est
+ * ouvert. Sinon, les routes privées exigent une session ; `/login` redirige
+ * vers l'accueil si déjà connecté.
+ */
+router.beforeEach(async (to) => {
+  const auth = useAuthStore()
+  await auth.init()
+
+  if (auth.demoMode) {
+    if (to.name === 'login') return { name: 'overview' }
+    return true
+  }
+
+  if (!to.meta.public && !auth.isAuthenticated) return { name: 'login' }
+  if (to.name === 'login' && auth.isAuthenticated) return { name: 'overview' }
+  return true
 })
