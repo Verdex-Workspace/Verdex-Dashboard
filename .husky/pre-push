@@ -1,0 +1,2 @@
+echo "🔎 Vérifications avant push (type-check + tests)…"
+pnpm type-check && pnpm test
