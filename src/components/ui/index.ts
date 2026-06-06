@@ -1,0 +1,12 @@
+/** Barrel des primitives UI du design system Verdex. */
+export { default as VBar } from './VBar.vue'
+export { default as VBars } from './VBars.vue'
+export { default as VBox } from './VBox.vue'
+export { default as VButton } from './VButton.vue'
+export { default as VChip } from './VChip.vue'
+export { default as VFrame } from './VFrame.vue'
+export { default as VIconBox } from './VIconBox.vue'
+export { default as VKpi } from './VKpi.vue'
+export { default as VSheetHeader } from './VSheetHeader.vue'
+export { default as VSpark } from './VSpark.vue'
+export { default as VTabs } from './VTabs.vue'

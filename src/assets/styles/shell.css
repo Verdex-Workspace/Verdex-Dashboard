@@ -1,0 +1,320 @@
+/* ============================================================
+   Verdex Design System — shell applicatif
+   Sidebar, top bar, sélecteur multi-clients, slide-over.
+   ============================================================ */
+@layer components {
+  .app {
+    display: grid;
+    grid-template-columns: 248px 1fr;
+    height: 100%;
+  }
+
+  /* ---------- sidebar ---------- */
+  .side {
+    background: var(--chrome);
+    border-right: 1px solid var(--line-2);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 18px 14px;
+  }
+  .brand .glyph {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 18%, transparent);
+  }
+  .brand b {
+    font-weight: 700;
+    letter-spacing: 0.2px;
+  }
+  .brand small {
+    display: block;
+    color: var(--muted);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .client {
+    margin: 2px 14px 8px;
+    padding: 9px 11px;
+    border: 1px solid var(--line-2);
+    border-radius: 11px;
+    background: var(--paper);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    transition: border-color 0.2s;
+    width: calc(100% - 28px);
+    color: var(--ink);
+    text-align: left;
+  }
+  .client:hover {
+    border-color: var(--accent-dim);
+  }
+  .client .av {
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    background: var(--fill-2);
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    flex: none;
+  }
+  .client .nm {
+    font-size: 12.5px;
+    font-weight: 600;
+    flex: 1;
+    line-height: 1.1;
+  }
+  .client .nm em {
+    display: block;
+    font-style: normal;
+    color: var(--muted);
+    font-size: 10px;
+    font-family: var(--font-mono);
+  }
+  .client .chev {
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .client-pop {
+    margin: -4px 14px 6px;
+    border: 1px solid var(--line-2);
+    border-radius: 11px;
+    background: var(--paper);
+    overflow: hidden;
+  }
+  .client-pop button {
+    display: flex;
+    width: 100%;
+    gap: 9px;
+    align-items: center;
+    padding: 8px 11px;
+    background: none;
+    border: 0;
+    color: var(--ink);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    text-align: left;
+  }
+  .client-pop button:hover {
+    background: var(--fill);
+  }
+  .client-pop .av {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    background: var(--fill-2);
+    display: grid;
+    place-items: center;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    flex: none;
+  }
+  .navscroll {
+    overflow: auto;
+    flex: 1;
+    padding: 6px 10px 16px;
+  }
+  .navgrp {
+    margin: 12px 8px 4px;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--font-mono);
+  }
+  .navitem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    border: 0;
+    background: none;
+    color: var(--ink);
+    cursor: pointer;
+    border-radius: 9px;
+    font-family: inherit;
+    font-size: 13px;
+    text-align: left;
+    transition:
+      background 0.15s,
+      color 0.15s;
+  }
+  .navitem .ic {
+    width: 18px;
+    text-align: center;
+    color: var(--muted);
+    transition: color 0.15s;
+  }
+  .navitem .kx {
+    margin-left: auto;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--muted);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .navitem:hover {
+    background: var(--fill);
+  }
+  .navitem:hover .kx {
+    opacity: 0.8;
+  }
+  .navitem.on {
+    background: color-mix(in oklab, var(--accent) 16%, transparent);
+    color: var(--ink);
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+  .navitem.on .ic {
+    color: var(--accent);
+  }
+
+  /* ---------- main / top bar ---------- */
+  .main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+  }
+  .top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 22px;
+    border-bottom: 1px solid var(--line-2);
+    background: color-mix(in oklab, var(--chrome) 75%, transparent);
+    backdrop-filter: blur(8px);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  .crumb {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+  .crumb b {
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .top .sp {
+    flex: 1;
+  }
+  .tg {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    border: 1px solid var(--line-2);
+    background: var(--paper);
+    border-radius: 10px;
+    padding: 6px 11px;
+    cursor: pointer;
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    transition: border-color 0.2s;
+  }
+  .tg:hover {
+    border-color: var(--accent-dim);
+  }
+  .canvas {
+    overflow: auto;
+    flex: 1;
+    padding: 30px 34px 90px;
+    scroll-behavior: smooth;
+  }
+
+  /* ---------- slide-over (detail panel) ---------- */
+  .scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 8, 6, 0.55);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+    z-index: 40;
+  }
+  .scrim.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .sover {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: min(660px, 92vw);
+    background: var(--paper);
+    border-left: 2px solid var(--line);
+    box-shadow: -30px 0 60px -30px rgba(0, 0, 0, 0.6);
+    transform: translateX(102%);
+    transition: transform 0.42s cubic-bezier(0.22, 0.74, 0.2, 1);
+    z-index: 41;
+    display: flex;
+    flex-direction: column;
+  }
+  .sover.show {
+    transform: none;
+  }
+  .sover-h {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line-2);
+  }
+  .sover-b {
+    overflow: auto;
+    padding: 18px 20px 40px;
+    flex: 1;
+  }
+  .xbtn {
+    margin-left: auto;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--paper2);
+    color: var(--ink);
+    cursor: pointer;
+    font-size: 15px;
+  }
+
+  /* ---------- responsive shell ---------- */
+  @media (max-width: 820px) {
+    .app {
+      grid-template-columns: 1fr;
+    }
+    .side {
+      position: fixed;
+      z-index: 50;
+      width: 248px;
+      height: 100%;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+    }
+    .side.open {
+      transform: none;
+    }
+  }
+}

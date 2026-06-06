@@ -1,0 +1,133 @@
+@import 'tailwindcss';
+@import './components.css';
+@import './shell.css';
+
+/* ============================================================
+   Verdex Design System — tokens
+   Thème sombre par défaut, thème clair via [data-theme="light"].
+   Source : design system Verdex (Claude Design).
+   ============================================================ */
+:root {
+  --bg: #0b1310;
+  --paper: #0f1815;
+  --paper2: #101f19;
+  --chrome: #0c1512;
+  --ink: #d9e7df;
+  --line: #39483f;
+  --line-2: #2a352f;
+  --fill: #16221c;
+  --fill-2: #1b2a23;
+  --muted: #7e9088;
+  --accent: #2ee59d;
+  --accent-dim: #1c8f64;
+  --accent-ink: #04140d;
+  --warn: #f0b84a;
+  --err: #f0766a;
+  --info: #6db5f0;
+  --shadow: 0 18px 40px -20px rgba(0, 0, 0, 0.7);
+}
+
+[data-theme='light'] {
+  --bg: #e9e7df;
+  --paper: #faf9f4;
+  --paper2: #f3f2ec;
+  --chrome: #f1efe7;
+  --ink: #2c352f;
+  --line: #c6cdc2;
+  --line-2: #d7dcd2;
+  --fill: #eef0e9;
+  --fill-2: #e6e9e0;
+  --muted: #8b948b;
+  --accent: #10996b;
+  --accent-dim: #7fcab0;
+  --accent-ink: #ffffff;
+  --warn: #c5871f;
+  --err: #cf5346;
+  --info: #3f86c9;
+  --shadow: 0 18px 40px -24px rgba(40, 55, 47, 0.35);
+}
+
+/* ============================================================
+   Exposition des tokens à Tailwind (utilities bg-paper, text-accent…)
+   ============================================================ */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-paper: var(--paper);
+  --color-paper2: var(--paper2);
+  --color-chrome: var(--chrome);
+  --color-ink: var(--ink);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-fill: var(--fill);
+  --color-fill-2: var(--fill-2);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-dim: var(--accent-dim);
+  --color-accent-ink: var(--accent-ink);
+  --color-warn: var(--warn);
+  --color-err: var(--err);
+  --color-info: var(--info);
+
+  --font-sans: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, monospace;
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  transition:
+    background 0.4s ease,
+    color 0.4s ease;
+}
+
+#app {
+  height: 100%;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 8px;
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sheet {
+    animation: rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+}
+@keyframes rise {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
