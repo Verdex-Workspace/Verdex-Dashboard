@@ -1,4 +1,4 @@
-import type { ActivityEntry, Alert, AutomationRun, Kpi, Ticket } from '@/types'
+import type { ActivityEntry, Alert, AutomationRun, Kpi, UrgentTicket } from '@/types'
 
 /** Données mock de la Vue d'ensemble (remplacées plus tard par Supabase/connecteurs). */
 
@@ -39,7 +39,7 @@ export const OVERVIEW_AUTOMATIONS: AutomationRun[] = [
   { id: 'f2', name: 'Relance factures', engine: 'make', status: 'err', last: 'auth expirée' },
 ]
 
-export const OVERVIEW_TICKETS: Ticket[] = [
+export const OVERVIEW_TICKETS: UrgentTicket[] = [
   { id: 't1', title: 'Fuite mémoire worker', priority: 'P1', age: '2j' },
   { id: 't2', title: 'Export CSV lent', priority: 'P2', age: '2j' },
   { id: 't3', title: 'Rate-limit API', priority: 'P2', age: '2j' },

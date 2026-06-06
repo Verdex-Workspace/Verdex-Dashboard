@@ -1,4 +1,4 @@
-import type { ActivityEntry, Alert, AutomationRun, Kpi, Ticket } from '@/types'
+import type { ActivityEntry, Alert, AutomationRun, Kpi, UrgentTicket } from '@/types'
 import {
   OVERVIEW_ACTIVITY,
   OVERVIEW_ALERTS,
@@ -18,7 +18,7 @@ export interface OverviewData {
   kpis: Kpi[]
   alerts: Alert[]
   automations: AutomationRun[]
-  tickets: Ticket[]
+  tickets: UrgentTicket[]
   activity: ActivityEntry[]
 }
 
