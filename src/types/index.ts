@@ -68,3 +68,85 @@ export interface ActivityEntry {
   id: string
   label: string
 }
+
+/* ============================================================
+   Module Projets & Outils
+   ============================================================ */
+
+/** Outil / projet suivi dans le dashboard (résumé carte). */
+export interface Tool {
+  id: string
+  name: string
+  env: Environment
+  status: StatusKind
+  version: string
+  stack: string
+  icon: string
+  /** nombre de PR ouvertes / issues ouvertes (résumé carte) */
+  openPrs: number
+  openIssues: number
+}
+
+/** Dépendance d'un outil. */
+export interface Dependency {
+  name: string
+  upToDate: boolean
+}
+
+/** Lien externe d'un outil. */
+export interface ToolLink {
+  label: string
+  url: string
+}
+
+/** Commit (résumé). */
+export interface Commit {
+  hash: string
+  message: string
+  age: string
+}
+
+/** Pull request (résumé). */
+export interface PullRequest {
+  id: string
+  title: string
+  status: StatusKind
+  detail: string
+}
+
+/** Issue (résumé). */
+export interface Issue {
+  id: string
+  kind: StatusKind
+  title: string
+  meta: string
+}
+
+/** Déploiement (résumé). */
+export interface Deployment {
+  env: Environment
+  version: string
+  when: string
+  status: StatusKind
+}
+
+/** KPI technique d'un outil. */
+export interface ToolMetric {
+  key: string
+  value: string
+  kind: StatusKind
+}
+
+/** Détail complet d'un outil (panneau slide-over). */
+export interface ToolDetail {
+  id: string
+  port: number
+  description: string
+  metrics: ToolMetric[]
+  dependencies: Dependency[]
+  links: ToolLink[]
+  commits: Commit[]
+  pullRequests: PullRequest[]
+  issues: Issue[]
+  deployments: Deployment[]
+}
