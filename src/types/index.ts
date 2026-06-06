@@ -364,3 +364,39 @@ export interface Workflow {
 export interface AutomationsData {
   workflows: Workflow[]
 }
+
+/* ============================================================
+   Module Admin / Infra
+   ============================================================ */
+
+/** Port utilisé et son exposition. */
+export interface Port {
+  port: number
+  service: string
+  proto: string
+  exposure: 'public' | 'interne'
+  status: StatusKind
+}
+
+/** Conteneur Docker (ressources). */
+export interface Container {
+  name: string
+  image: string
+  status: StatusKind
+  cpu: string
+  memory: string
+}
+
+/** Groupe de scripts package.json d'un projet. */
+export interface ScriptGroup {
+  project: string
+  scripts: string[]
+}
+
+/** Données du module Admin / Infra. */
+export interface InfraData {
+  ports: Port[]
+  containers: Container[]
+  compose: string[]
+  scripts: ScriptGroup[]
+}
