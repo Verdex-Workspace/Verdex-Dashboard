@@ -147,3 +147,7 @@ vite.config.ts.timestamp-*
 
 # Claude Code (helpers locaux)
 .claude/
+
+# Playwright
+/playwright-report/
+/test-results/
