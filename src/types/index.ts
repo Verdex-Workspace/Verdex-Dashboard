@@ -317,3 +317,50 @@ export interface AuditData {
   scores: AuditScore[]
   vulnerabilities: Vulnerability[]
 }
+
+/* ============================================================
+   Module Automations (graphe de workflows)
+   ============================================================ */
+
+export type AutomationEngine = 'n8n' | 'make' | 'zapier'
+export type ExecStatus = 'ok' | 'err' | 'skip'
+
+/** Nœud d'un workflow (position en %). */
+export interface FlowNode {
+  id: number
+  x: number
+  y: number
+  type: string
+  label: string
+}
+
+/** Arête orientée entre deux nœuds. */
+export interface FlowEdge {
+  from: number
+  to: number
+}
+
+/** Ligne de log d'exécution (nœud par nœud). */
+export interface ExecLog {
+  time: string
+  node: string
+  status: ExecStatus
+  detail: string
+}
+
+/** Workflow d'automation, quel que soit le moteur. */
+export interface Workflow {
+  id: string
+  name: string
+  engine: AutomationEngine
+  status: StatusKind
+  last: string
+  nodes: FlowNode[]
+  edges: FlowEdge[]
+  logs: ExecLog[]
+}
+
+/** Données du module Automations. */
+export interface AutomationsData {
+  workflows: Workflow[]
+}
