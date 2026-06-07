@@ -1,24 +1,61 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { VChip, VFrame } from '@/components/ui'
+import { computed, ref } from 'vue'
+import { VButton, VChip, VFrame } from '@/components/ui'
 import { PRIORITY_KIND, STATUS_LABEL, TYPE_KIND, TYPE_LABEL, formatDeadline } from './helpers'
-import { priorityScore } from '@/services/ticketing.service'
-import type { Assignee, Ticket } from '@/types'
+import { priorityScore, updateTicket } from '@/services/ticketing.service'
+import { githubWrite } from '@/services/github.service'
+import { useAuthStore } from '@/stores/auth'
+import type { Assignee, LinkedRef, Ticket } from '@/types'
 
-const props = defineProps<{ ticket: Ticket; assignees: Assignee[] }>()
+interface RepoOption {
+  id: string
+  name: string
+  repo: string
+}
 
+const props = defineProps<{ ticket: Ticket; assignees: Assignee[]; repos?: RepoOption[] }>()
+
+const auth = useAuthStore()
 const assignee = computed(
   () => props.assignees.find((a) => a.id === props.ticket.assigneeId) ?? null,
 )
 const deadline = computed(() => formatDeadline(props.ticket.deadline))
 
-/** Actions futures (vision « point d'entrée unique »). Nécessitent le connecteur Proton. */
-const futureActions = [
-  { icon: '◷', label: 'Planifier dans Proton Calendar' },
-  { icon: '↓', label: 'Générer le rapport (PDF)' },
-  { icon: '☁', label: 'Classer dans Proton Drive' },
-  { icon: '✉', label: 'Notifier par Proton Mail' },
-]
+// --- Pont GitHub : créer une issue depuis le ticket ---
+const repoOptions = computed(() => props.repos ?? [])
+const selectedRepo = ref(repoOptions.value[0]?.repo ?? '')
+const linkedIssues = ref<LinkedRef[]>([...props.ticket.linkedIssues])
+const pushing = ref(false)
+const pushMsg = ref<{ ok: boolean; text: string; url: string | null } | null>(null)
+const canBridge = computed(() => !auth.demoMode && repoOptions.value.length > 0)
+
+async function pushIssue() {
+  if (!selectedRepo.value) return
+  pushing.value = true
+  pushMsg.value = null
+  try {
+    const r = await githubWrite(selectedRepo.value, 'issue', {
+      title: props.ticket.title,
+      body: `${props.ticket.description}\n\n— créé depuis Verdex Dashboard (ticket #${props.ticket.ref})`,
+      labels: props.ticket.labels.map((l) => l.name),
+    })
+    const repoName = selectedRepo.value.split('/')[1]
+    const link: LinkedRef = {
+      id: String(r.number ?? Date.now()),
+      label: `${repoName}#${r.number ?? '?'}`,
+    }
+    linkedIssues.value = [...linkedIssues.value, link]
+    await updateTicket(props.ticket.id, { linkedIssues: linkedIssues.value })
+    pushMsg.value = { ok: true, text: `Issue créée · ${link.label}`, url: r.url }
+  } catch (e) {
+    pushMsg.value = { ok: false, text: e instanceof Error ? e.message : 'Échec.', url: null }
+  } finally {
+    pushing.value = false
+  }
+}
+
+const selectStyle =
+  'border:1.5px solid var(--line);background:var(--paper2);color:var(--ink);font-family:var(--font-mono);font-size:11.5px;border-radius:8px;padding:7px 10px;cursor:pointer;flex:1'
 </script>
 
 <template>
@@ -90,12 +127,9 @@ const futureActions = [
         <span v-else class="mono" style="font-size: 11px; color: var(--muted)">aucune</span>
       </VFrame>
       <VFrame cap="Issues" tag="liées">
-        <div
-          v-if="ticket.linkedIssues.length"
-          style="display: flex; flex-direction: column; gap: 6px"
-        >
+        <div v-if="linkedIssues.length" style="display: flex; flex-direction: column; gap: 6px">
           <span
-            v-for="i in ticket.linkedIssues"
+            v-for="i in linkedIssues"
             :key="i.id"
             class="mono"
             style="font-size: 11.5px; color: var(--accent)"
@@ -106,29 +140,58 @@ const futureActions = [
       </VFrame>
     </div>
 
-    <!-- Actions futures (point d'entrée unique) -->
-    <VFrame cap="Actions" tag="point d'entrée unique">
-      <div style="display: flex; flex-direction: column; gap: 8px">
-        <button
-          v-for="a in futureActions"
-          :key="a.label"
-          class="btnw"
-          type="button"
-          disabled
-          style="justify-content: flex-start; opacity: 0.75; cursor: not-allowed"
+    <!-- Pont GitHub : créer une issue depuis ce ticket -->
+    <VFrame cap="Pousser sur GitHub" tag="issue">
+      <template v-if="canBridge">
+        <div style="display: flex; gap: 8px; align-items: center">
+          <select v-model="selectedRepo" :style="selectStyle" aria-label="Dépôt cible">
+            <option v-for="r in repoOptions" :key="r.id" :value="r.repo">{{ r.repo }}</option>
+          </select>
+          <VButton primary @click="pushIssue">{{
+            pushing ? 'Création…' : "Créer l'issue"
+          }}</VButton>
+        </div>
+        <p
+          v-if="pushMsg"
+          class="mono"
+          :style="{
+            fontSize: '11px',
+            marginTop: '10px',
+            color: pushMsg.ok ? 'var(--accent)' : 'var(--err)',
+          }"
         >
-          <span>{{ a.icon }}</span>
-          {{ a.label }}
-          <span style="margin-left: auto"><VChip :dot="false">à venir</VChip></span>
-        </button>
-      </div>
-      <p
-        class="mono"
-        style="font-size: 10px; color: var(--muted); margin-top: 10px; line-height: 1.5"
-      >
-        Depuis ce ticket, une seule action répercutera la deadline dans Proton Calendar, classera le
-        rapport généré dans Proton Drive et enverra l'alerte par Proton Mail. Nécessite le
-        connecteur Proton (backend) — voir la checklist infrastructure.
+          {{ pushMsg.ok ? '✓ ' : '⚠ ' }}{{ pushMsg.text }}
+          <a
+            v-if="pushMsg.url"
+            :href="pushMsg.url"
+            target="_blank"
+            rel="noopener"
+            style="color: var(--accent)"
+            >ouvrir ↗</a
+          >
+        </p>
+        <p
+          class="mono"
+          style="font-size: 10px; color: var(--muted); margin-top: 8px; line-height: 1.5"
+        >
+          Crée une issue réelle (titre, description, labels du ticket) sur le dépôt choisi et la
+          relie automatiquement à ce ticket.
+        </p>
+      </template>
+      <p v-else class="mono" style="font-size: 11px; color: var(--muted)">
+        {{
+          auth.demoMode
+            ? 'Indisponible en mode démo.'
+            : 'Suivez d’abord un dépôt dans « Projets & Outils » pour pouvoir y créer des issues.'
+        }}
+      </p>
+    </VFrame>
+
+    <!-- Actions futures (Proton) -->
+    <VFrame cap="Actions" tag="point d'entrée unique">
+      <p class="mono" style="font-size: 10px; color: var(--muted); line-height: 1.5">
+        Bientôt : répercuter la deadline dans Proton Calendar, classer le rapport généré dans Proton
+        Drive et notifier par Proton Mail — en une action. Nécessite le connecteur Proton (backend).
       </p>
     </VFrame>
   </div>
