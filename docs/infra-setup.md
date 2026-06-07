@@ -20,7 +20,11 @@ Pour que la CI/CD et les déploiements fonctionnent.
   - exiger la branche **à jour** avant merge.
 - [ ] Créer la branche **`staging`** (pré-production) avec la même protection.
 - [ ] Activer **Dependabot** (déjà configuré via `.github/dependabot.yml`) et, dans
-      Settings → Code security, activer **Code scanning (CodeQL)** et **Secret scanning**.
+      Settings → Code security, activer **Dependency graph**, **Code scanning
+      (CodeQL)** et **Secret scanning**.
+  - ℹ️ Le **Dependency graph** est requis par le job `dependency-review` ; tant
+    qu'il n'est pas activé, ce job reste informatif (non bloquant) — la porte
+    bloquante sur les vulnérabilités est assurée par `pnpm audit`.
 - [ ] Ajouter les **secrets** (Settings → Secrets and variables → Actions) :
   - `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` (voir §2)
 
@@ -54,13 +58,25 @@ Remplacera les données mock (`src/data/mock`) via la couche `src/services`.
 ➡️ **À me transmettre** : `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY`
 (je les mets dans `.env.local` / Vercel et je branche le client Supabase).
 
-## 4. 🟡 Redis — cache
+## 4. 🟡 Redis — cache (Upstash)
 
-- [ ] **En local** : déjà fourni par `docker compose up` (port `6379`).
-- [ ] **En prod** : un Redis managé (Upstash s'intègre très bien à Vercel,
-      ou Redis Cloud).
+Le code utilise un cache **Upstash Redis (REST)** via `api/_lib/cache.ts`. Sans
+configuration, le cache est simplement désactivé (dégradation gracieuse) — rien
+ne casse.
 
-➡️ **À me transmettre** : l'`REDIS_URL` de prod (secret serveur, pas `VITE_`).
+- [ ] **En local** : Redis fourni par `docker compose up` (port `6379`) — optionnel.
+- [ ] **En prod** : créer une base **Upstash** (plan gratuit) sur
+      [upstash.com](https://upstash.com), section _Redis_, et récupérer les
+      identifiants **REST**.
+
+➡️ **À me transmettre** (secrets serveur, à mettre dans Vercel) :
+`UPSTASH_REDIS_REST_URL` et `UPSTASH_REDIS_REST_TOKEN`.
+
+## 4 bis. 🟢 Vérifier la santé du backend
+
+Une fois déployé, `GET /api/health` renvoie l'état (booléens, sans secret) :
+`{ services: { supabase, redis, github } }`. Pratique pour confirmer que les
+variables d'environnement sont bien prises en compte sur Vercel.
 
 ## 5. 🟢 Docker — environnement local
 
@@ -132,16 +148,16 @@ simple est de tout déployer derrière **Traefik** via Docker Compose.
 
 ## Récapitulatif « à me transmettre »
 
-| Élément                          | Type            | Priorité |
-| -------------------------------- | --------------- | -------- |
-| Projet Vercel créé               | confirmation    | 🟢       |
-| `VITE_SUPABASE_URL` + clé `anon` | config publique | 🟡       |
-| `REDIS_URL` (prod)               | secret serveur  | 🟡       |
-| URLs Prometheus / Loki           | config + token  | ⚪       |
-| URL + token Grafana              | secret serveur  | ⚪       |
-| URL API Traefik                  | secret serveur  | ⚪       |
-| URL + clé API n8n                | secret serveur  | ⚪       |
-| Clé API LLM (audit)              | secret serveur  | ⚪       |
+| Élément                             | Type            | Priorité |
+| ----------------------------------- | --------------- | -------- |
+| Projet Vercel créé                  | confirmation    | 🟢       |
+| `VITE_SUPABASE_URL` + clé `anon`    | config publique | 🟡       |
+| `UPSTASH_REDIS_REST_URL` + `_TOKEN` | secrets serveur | 🟡       |
+| URLs Prometheus / Loki              | config + token  | ⚪       |
+| URL + token Grafana                 | secret serveur  | ⚪       |
+| URL API Traefik                     | secret serveur  | ⚪       |
+| URL + clé API n8n                   | secret serveur  | ⚪       |
+| Clé API LLM (audit)                 | secret serveur  | ⚪       |
 
 > 🔐 **Rappel** : tout ce qui est _secret serveur_ ne doit **jamais** être
 > préfixé `VITE_` ni committé. On le met dans `.env.local` (local) ou dans les

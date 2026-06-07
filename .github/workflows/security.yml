@@ -31,6 +31,11 @@ jobs:
     name: Revue des dépendances (PR)
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    # Best-effort : nécessite le « Dependency graph » activé sur le dépôt
+    # (Settings → Code security). La porte bloquante sur les vulnérabilités
+    # reste `pnpm audit` ci-dessous ; on n'échoue donc pas la CI si le graphe
+    # n'est pas (encore) disponible.
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/dependency-review-action@v4
