@@ -12,8 +12,10 @@
  */
 
 interface VercelRequest {
+  method?: string
   query: Record<string, string | string[] | undefined>
   headers: Record<string, string | string[] | undefined>
+  body?: unknown
 }
 interface VercelResponse {
   status: (code: number) => VercelResponse
@@ -79,12 +81,59 @@ async function readme(repo: string): Promise<string | null> {
   }
 }
 
+const WRITE_PATHS: Record<string, (repo: string) => string> = {
+  issue: (r) => `/repos/${r}/issues`,
+  label: (r) => `/repos/${r}/labels`,
+  milestone: (r) => `/repos/${r}/milestones`,
+  release: (r) => `/repos/${r}/releases`,
+}
+
+/** Crée une ressource GitHub (issue, label, milestone, release). */
+async function writeAction(body: unknown, res: VercelResponse) {
+  const b = (body ?? {}) as { repo?: string; action?: string; payload?: Record<string, unknown> }
+  if (!b.repo || !/^[\w.-]+\/[\w.-]+$/.test(b.repo) || !b.action) {
+    res.status(400).json({ error: 'invalid request' })
+    return
+  }
+  const pathFor = WRITE_PATHS[b.action]
+  if (!pathFor) {
+    res.status(400).json({ error: 'unknown action' })
+    return
+  }
+  try {
+    const r = await fetch(`${API}${pathFor(b.repo)}`, {
+      method: 'POST',
+      headers: { ...ghHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(b.payload ?? {}),
+    })
+    const data = (await r.json()) as Record<string, unknown>
+    if (!r.ok) {
+      res.status(r.status).json({ error: (data?.message as string) ?? 'github error' })
+      return
+    }
+    res.status(201).json({
+      ok: true,
+      url: data.html_url ?? null,
+      number: data.number ?? data.id ?? null,
+      name: data.name ?? data.title ?? data.tag_name ?? null,
+    })
+  } catch {
+    res.status(502).json({ error: 'github unreachable' })
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const authHeader = req.headers?.authorization ?? req.headers?.Authorization
   const raw = Array.isArray(authHeader) ? authHeader[0] : authHeader
   const token = raw?.startsWith('Bearer ') ? raw.slice(7) : undefined
   if (!(await verifyUser(token))) {
     res.status(401).json({ error: 'unauthorized' })
+    return
+  }
+
+  // ----- Écritures (POST) -----
+  if (req.method === 'POST') {
+    await writeAction(req.body, res)
     return
   }
 

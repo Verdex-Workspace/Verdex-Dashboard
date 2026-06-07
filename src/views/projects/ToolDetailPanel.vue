@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { VBar, VBars, VBox, VButton, VChip, VFrame, VKpi, VTabs } from '@/components/ui'
 import { fetchToolDetail } from '@/services/projects.service'
+import GithubWriteForm from './GithubWriteForm.vue'
 import type { Environment, StatusKind, Tool, ToolDetail } from '@/types'
 
 const props = defineProps<{ tool: Tool; onUntrack?: (tool: Tool) => void }>()
@@ -15,14 +16,18 @@ const ENV_KIND: Record<Environment, StatusKind> = {
 const detail = ref<ToolDetail | null>(null)
 const loading = ref(true)
 
-const tabs = computed(() => [
-  { id: 'apercu', label: 'Aperçu' },
-  { id: 'readme', label: 'README' },
-  { id: 'commits', label: `Commits` },
-  { id: 'pr', label: `PR · ${detail.value?.pullRequests.length ?? 0}` },
-  { id: 'issues', label: `Issues · ${detail.value?.issues.length ?? 0}` },
-  { id: 'deploy', label: 'Déploiements' },
-])
+const tabs = computed(() => {
+  const base = [
+    { id: 'apercu', label: 'Aperçu' },
+    { id: 'readme', label: 'README' },
+    { id: 'commits', label: `Commits` },
+    { id: 'pr', label: `PR · ${detail.value?.pullRequests.length ?? 0}` },
+    { id: 'issues', label: `Issues · ${detail.value?.issues.length ?? 0}` },
+    { id: 'deploy', label: 'Déploiements' },
+  ]
+  if (props.tool.repo) base.push({ id: 'create', label: '✎ Créer' })
+  return base
+})
 const tab = ref('apercu')
 
 onMounted(async () => {
@@ -218,5 +223,8 @@ onMounted(async () => {
         </VBox>
       </div>
     </template>
+
+    <!-- Créer (écriture GitHub) — indépendant du détail -->
+    <GithubWriteForm v-if="!loading && tab === 'create' && tool.repo" :repo="tool.repo" />
   </div>
 </template>
