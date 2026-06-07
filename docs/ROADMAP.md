@@ -33,8 +33,11 @@ en page d'aperçu — à compléter).
   (add/remove), détail enrichi en **données GitHub réelles** (README, commits, PR,
   issues, déploiements) via `/api/github`. **Écritures GitHub** (issue, label,
   milestone, release) + **fermeture d'issue** (onglet Issues).
-- **Ticketing** : table `tickets` (RLS), création/**suppression**, **état vide**,
-  **pont ticket → issue GitHub** (création + lien persistant).
+- **Ticketing** : table `tickets` (RLS, + `milestone`/`size`/`estimate`),
+  création/**suppression**, **état vide**, **édition inline** (statut, priorité, type,
+  assigné, milestone, size, estimate, deadline, sprint, **labels** en sélection guidée)
+  via `updateTicket` (patch générique), **pont ticket → issue GitHub** (création + lien
+  persistant).
 - Migrations dans `supabase/migrations/` (jusqu'à `0006_tickets.sql`). Appliquer
   via `supabase db push`.
 
@@ -48,10 +51,12 @@ en page d'aperçu — à compléter).
 
 1. **Champs GitHub complets sur le ticket** (cf. capture GitHub Projects) :
    **assignés, labels, type, milestone, statut, size, estimate, relations**.
-   - Étendre `tickets` (colonnes/JSONB) + `AddTicketPanel`/`TicketDetailPanel`
-     (édition inline) + `updateTicket` (déjà partiel).
-   - **Synchro ticket ↔ issue** dans les deux sens (assignés/labels/milestone/état)
-     via `/api/github` (étendre les actions write : assignees, milestone, state).
+   - ✅ **Volet A (fait)** : `tickets` étendu (`milestone`/`size`/`estimate`,
+     migration `0007`) + **édition inline** dans `TicketDetailPanel` + `AddTicketPanel`
+     enrichi + `updateTicket` patch générique.
+   - ⏳ **Volet B (à faire)** : **synchro ticket ↔ issue** dans les deux sens
+     (assignés/labels/milestone/état) via `/api/github` (étendre les actions write :
+     `update-issue` → assignees, milestone, state, labels).
 2. **Reflet automatique multi-vues** : statut/échéance/assigné du ticket pilotent
    **Kanban** (déjà par statut), **Gantt** & **Roadmap** (dériver des deadlines/sprints
    réels au lieu du mock), **filtre par assigné** (déjà présent, à brancher sur données réelles).

@@ -1,6 +1,26 @@
-import type { StatusKind, TicketPriority, TicketStatus, TicketType } from '@/types'
+import type {
+  Label,
+  StatusKind,
+  TicketPriority,
+  TicketSize,
+  TicketStatus,
+  TicketType,
+} from '@/types'
 
 /** Correspondances de couleurs/labels partagées par les vues du Ticketing. */
+
+/** Catalogue de labels proposés (source unique pour la sélection guidée + le mock). */
+export const LABEL_CATALOG: Label[] = [
+  { id: 'backend', name: 'backend', kind: 'info' },
+  { id: 'frontend', name: 'frontend', kind: 'info' },
+  { id: 'security', name: 'sécurité', kind: 'err' },
+  { id: 'infra', name: 'infra', kind: 'warn' },
+  { id: 'perf', name: 'perf', kind: 'warn' },
+  { id: 'ux', name: 'ux', kind: 'info' },
+]
+
+/** Tailles disponibles (single-select façon GitHub Projects). */
+export const SIZES: TicketSize[] = ['XS', 'S', 'M', 'L', 'XL']
 
 export const TYPE_KIND: Record<TicketType, StatusKind> = {
   bug: 'err',

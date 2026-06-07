@@ -195,6 +195,8 @@ export interface LogsData {
 export type TicketType = 'bug' | 'feature' | 'perf' | 'chore'
 export type TicketPriority = 'P1' | 'P2' | 'P3'
 export type TicketStatus = 'backlog' | 'todo' | 'in_progress' | 'review' | 'done'
+/** Taille façon GitHub Projects (single-select). */
+export type TicketSize = 'XS' | 'S' | 'M' | 'L' | 'XL'
 
 /** Personne assignable à un ticket. */
 export interface Assignee {
@@ -239,6 +241,12 @@ export interface Ticket {
   /** échéance ISO (YYYY-MM-DD) — alimente la charge & la future synchro Calendar */
   deadline: string | null
   sprint: string | null
+  /** jalon GitHub (texte libre) */
+  milestone: string | null
+  /** taille relative (XS→XL) façon GitHub Projects */
+  size: TicketSize | null
+  /** estimation chiffrée (jours/points), distincte de l'effort */
+  estimate: number | null
   linkedPrs: LinkedRef[]
   linkedIssues: LinkedRef[]
   createdAt: string

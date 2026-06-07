@@ -17,6 +17,9 @@ vi.mock('@/lib/supabase', () => {
     labels: [],
     deadline: null,
     sprint: null,
+    milestone: 'v1.2',
+    size: 'M',
+    estimate: 3,
     linked_prs: [],
     linked_issues: [],
     created_at: '2026-06-07',
@@ -39,7 +42,15 @@ const { fetchTicketing, createTicket, deleteTicket, updateTicket } =
 describe('ticketing.service (Supabase mocké)', () => {
   it('mappe les lignes `tickets`', async () => {
     const data = await fetchTicketing('me')
-    expect(data.tickets[0]).toMatchObject({ id: 'u1', ref: 7, title: 'Ticket réel', toolId: null })
+    expect(data.tickets[0]).toMatchObject({
+      id: 'u1',
+      ref: 7,
+      title: 'Ticket réel',
+      toolId: null,
+      milestone: 'v1.2',
+      size: 'M',
+      estimate: 3,
+    })
     expect(data.assignees.length).toBeGreaterThan(0)
   })
 
@@ -55,5 +66,17 @@ describe('ticketing.service (Supabase mocké)', () => {
 
   it('updateTicket se résout', async () => {
     await expect(updateTicket('u1', { status: 'done' })).resolves.toBeUndefined()
+  })
+
+  it('updateTicket accepte un patch multi-champs', async () => {
+    await expect(
+      updateTicket('u1', {
+        priority: 'P1',
+        assigneeId: 'coco',
+        milestone: 'v1.3',
+        size: 'L',
+        estimate: 5,
+      }),
+    ).resolves.toBeUndefined()
   })
 })

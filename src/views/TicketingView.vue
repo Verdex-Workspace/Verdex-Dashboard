@@ -28,6 +28,7 @@ const gantt = ref<GanttTask[]>([])
 const months = ref<string[]>([])
 const weeks = ref<string[]>([])
 const repos = ref<{ id: string; name: string; repo: string }[]>([])
+const toolsList = ref<{ id: string; name: string }[]>([])
 const loading = ref(true)
 
 const view = ref('kanban')
@@ -63,6 +64,8 @@ async function load() {
   repos.value = tls
     .filter((t) => t.repo)
     .map((t) => ({ id: t.id, name: t.name, repo: t.repo as string }))
+  // Outils disponibles (pour rattacher un ticket à la création).
+  toolsList.value = tls.map((t) => ({ id: t.id, name: t.name }))
   loading.value = false
 }
 onMounted(load)
@@ -90,8 +93,19 @@ function openTicket(ticket: Ticket) {
     title: `#${ticket.ref} ${ticket.title}`,
     sub: `${ticket.type} · ${ticket.priority} · ${ticket.toolId ?? '—'}`,
     component: markRaw(TicketDetailPanel),
-    props: { ticket, assignees: assignees.value, repos: repos.value, onDelete: removeTicket },
+    props: {
+      ticket,
+      assignees: assignees.value,
+      repos: repos.value,
+      onDelete: removeTicket,
+      onUpdate: patchTicketInList,
+    },
   })
+}
+
+/** Reflète une édition inline dans la liste (Kanban/Table/Matrice). */
+function patchTicketInList(updated: Ticket) {
+  tickets.value = tickets.value.map((t) => (t.id === updated.id ? updated : t))
 }
 
 async function removeTicket(ticket: Ticket) {
@@ -118,6 +132,9 @@ function addTicketDemo() {
     labels: [],
     deadline: null,
     sprint: null,
+    milestone: null,
+    size: null,
+    estimate: null,
     linkedPrs: [],
     linkedIssues: [],
     createdAt: new Date().toISOString().slice(0, 10),
@@ -135,6 +152,9 @@ function openAddTicket() {
     sub: 'backlog',
     component: markRaw(AddTicketPanel),
     props: {
+      assignees: assignees.value,
+      tools: toolsList.value,
+      clientId: activeClient.value.id,
       onAdded: (ticket: Ticket) => {
         tickets.value = [ticket, ...tickets.value]
       },
