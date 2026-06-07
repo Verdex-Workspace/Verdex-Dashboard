@@ -223,6 +223,13 @@ async function writeAction(body: unknown, res: VercelResponse) {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Seules la lecture (GET) et l'écriture (POST) sont supportées.
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    res.setHeader('Allow', 'GET, POST')
+    res.status(405).json({ error: 'method not allowed' })
+    return
+  }
+
   const authHeader = req.headers?.authorization ?? req.headers?.Authorization
   const raw = Array.isArray(authHeader) ? authHeader[0] : authHeader
   const token = raw?.startsWith('Bearer ') ? raw.slice(7) : undefined
