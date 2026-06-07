@@ -1,14 +1,14 @@
 // ============================================================
 // Endpoint d'audit de sécurité : POST /api/audit
-// Pipeline : signaux GitHub → analyse Claude → findings JSON → score CVSS local.
-// Auth Supabase requise. Sans clé Anthropic → { fallback: true } (repli mock côté
+// Pipeline : signaux GitHub → analyse LLM → findings JSON → score CVSS local.
+// Auth Supabase requise. Sans LLM configuré → { fallback: true } (repli mock côté
 // client). Le score est TOUJOURS recalculé localement depuis le vecteur CVSS.
 // ============================================================
 import type { VercelRequest, VercelResponse } from './_lib/http'
 import { getBearerToken } from './_lib/http'
 import { verifyUser } from './_lib/auth'
 import { withCache } from './_lib/cache'
-import { analyze, isAnthropicConfigured } from './_lib/anthropic'
+import { analyze, isLlmConfigured } from './_lib/llm'
 import { collectSignals } from './_lib/signals'
 import { cvssBaseScore, severityFromScore } from '../src/lib/cvss'
 
@@ -51,8 +51,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  // Sans clé Anthropic, on signale le repli — le client utilisera son mock.
-  if (!isAnthropicConfigured()) {
+  // Sans LLM configuré, on signale le repli — le client utilisera son mock.
+  if (!isLlmConfigured()) {
     res.status(200).json({ fallback: true, scores: [], vulnerabilities: [] })
     return
   }

@@ -6,7 +6,7 @@
 import type { VercelRequest, VercelResponse } from './_lib/http'
 import { isSupabaseConfigured } from './_lib/auth'
 import { isCacheConfigured } from './_lib/cache'
-import { isAnthropicConfigured } from './_lib/anthropic'
+import { isLlmConfigured } from './_lib/llm'
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
@@ -22,7 +22,7 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
       supabase: isSupabaseConfigured(),
       redis: isCacheConfigured(),
       github: Boolean(process.env.GITHUB_TOKEN),
-      anthropic: isAnthropicConfigured(),
+      llm: isLlmConfigured(),
     },
     timestamp: new Date().toISOString(),
   })
