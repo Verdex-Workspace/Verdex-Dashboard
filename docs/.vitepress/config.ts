@@ -16,6 +16,7 @@ export default defineConfig({
     nav: [
       { text: 'Guide', link: '/guide/getting-started' },
       { text: 'Utilisateur', link: '/user-guide' },
+      { text: 'Audit & roadmap', link: '/AUDIT' },
       { text: 'Infra à faire', link: '/infra-setup' },
       {
         text: 'Liens',
@@ -52,6 +53,7 @@ export default defineConfig({
           items: [
             { text: 'Introduction', link: '/' },
             { text: 'Guide utilisateur', link: '/user-guide' },
+            { text: 'Audit & roadmap', link: '/AUDIT' },
             { text: 'Checklist infrastructure', link: '/infra-setup' },
           ],
         },
