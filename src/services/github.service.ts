@@ -43,3 +43,28 @@ export async function fetchGithubDetail(repo: string): Promise<GithubDetail | nu
     return null
   }
 }
+
+export type GithubWriteAction = 'issue' | 'label' | 'milestone' | 'release'
+
+export interface GithubWriteResult {
+  ok: boolean
+  url: string | null
+  number: number | null
+  name: string | null
+}
+
+/** Crée une ressource GitHub (issue/label/milestone/release) via la fonction serverless authentifiée. */
+export async function githubWrite(
+  repo: string,
+  action: GithubWriteAction,
+  payload: Record<string, unknown>,
+): Promise<GithubWriteResult> {
+  const res = await fetch('/api/github', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+    body: JSON.stringify({ repo, action, payload }),
+  })
+  const data = (await res.json().catch(() => ({}))) as GithubWriteResult & { error?: string }
+  if (!res.ok) throw new Error(data.error ?? "Échec de l'écriture GitHub")
+  return data
+}
