@@ -4,6 +4,7 @@ import {
   priorityScore,
   createTicket,
   deleteTicket,
+  updateTicket,
 } from '@/services/ticketing.service'
 
 describe('ticketing.service', () => {
@@ -37,5 +38,11 @@ describe('ticketing — garde-fous (hors Supabase)', () => {
   })
   it('deleteTicket lève sans Supabase', async () => {
     await expect(deleteTicket('x')).rejects.toThrow()
+  })
+})
+
+describe('ticketing — updateTicket garde-fou', () => {
+  it('lève sans Supabase', async () => {
+    await expect(updateTicket('x', { status: 'done' })).rejects.toThrow()
   })
 })

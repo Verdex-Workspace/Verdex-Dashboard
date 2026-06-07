@@ -9,8 +9,8 @@ test.describe('Ticketing', () => {
     await page.locator('.wbox.clickable').first().click()
     const panel = page.locator('.sover.show')
     await expect(panel).toBeVisible()
+    await expect(panel.getByText('Pousser sur GitHub')).toBeVisible()
     await expect(panel.getByText('Actions')).toBeVisible()
-    await expect(panel.getByText('à venir').first()).toBeVisible()
     await page.keyboard.press('Escape')
   })
 
