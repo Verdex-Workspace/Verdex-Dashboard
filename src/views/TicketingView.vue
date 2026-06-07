@@ -5,17 +5,20 @@ import { VButton, VFrame, VSheetHeader, VTabs } from '@/components/ui'
 import { fetchTicketing } from '@/services/ticketing.service'
 import { useUiStore } from '@/stores/ui'
 import { useDetailStore } from '@/stores/detail'
+import { useAuthStore } from '@/stores/auth'
 import KanbanBoard from './ticketing/KanbanBoard.vue'
 import TicketTable from './ticketing/TicketTable.vue'
 import RoadmapChart from './ticketing/RoadmapChart.vue'
 import GanttChart from './ticketing/GanttChart.vue'
 import PriorityMatrix from './ticketing/PriorityMatrix.vue'
 import TicketDetailPanel from './ticketing/TicketDetailPanel.vue'
+import AddTicketPanel from './ticketing/AddTicketPanel.vue'
 import type { Assignee, GanttTask, RoadmapItem, Ticket } from '@/types'
 
 const ui = useUiStore()
 const { activeClient } = storeToRefs(ui)
 const detail = useDetailStore()
+const auth = useAuthStore()
 
 const tickets = ref<Ticket[]>([])
 const assignees = ref<Assignee[]>([])
@@ -50,7 +53,7 @@ async function load() {
   gantt.value = data.gantt
   months.value = data.months
   weeks.value = data.weeks
-  nextRef = Math.max(...data.tickets.map((t) => t.ref)) + 1
+  nextRef = data.tickets.length ? Math.max(...data.tickets.map((t) => t.ref)) + 1 : 200
   loading.value = false
 }
 onMounted(load)
@@ -82,7 +85,8 @@ function openTicket(ticket: Ticket) {
   })
 }
 
-function addTicket() {
+/** Mode démo : ajout local (non persistant). */
+function addTicketDemo() {
   const ticket: Ticket = {
     id: `t-${nextRef}`,
     ref: nextRef++,
@@ -106,6 +110,26 @@ function addTicket() {
   }
   tickets.value = [ticket, ...tickets.value]
   openTicket(ticket)
+}
+
+/** Mode connecté : formulaire → persistance Supabase. */
+function openAddTicket() {
+  detail.open({
+    icon: '＋',
+    title: 'Nouveau ticket',
+    sub: 'backlog',
+    component: markRaw(AddTicketPanel),
+    props: {
+      onAdded: (ticket: Ticket) => {
+        tickets.value = [ticket, ...tickets.value]
+      },
+    },
+  })
+}
+
+function addTicket() {
+  if (auth.demoMode) addTicketDemo()
+  else openAddTicket()
 }
 
 const selectStyle =
@@ -153,6 +177,22 @@ const selectStyle =
 
     <VFrame chrome :title="`verdex.app / ticketing / ${view}`">
       <p v-if="loading" class="mono" style="color: var(--muted)">Chargement…</p>
+
+      <!-- État vide (vues basées sur les tickets) -->
+      <div
+        v-else-if="ticketViews.has(view) && !tickets.length"
+        style="display: grid; place-items: center; text-align: center; padding: 36px 0"
+      >
+        <div>
+          <div style="font-size: 28px; color: var(--accent)">◧</div>
+          <p style="font-size: 13.5px; margin: 10px 0 4px">Aucun ticket pour le moment.</p>
+          <p class="mono" style="font-size: 11px; color: var(--muted); margin-bottom: 14px">
+            Créez votre premier ticket pour alimenter le backlog.
+          </p>
+          <VButton primary @click="addTicket">+ ticket</VButton>
+        </div>
+      </div>
+
       <template v-else>
         <KanbanBoard
           v-if="view === 'kanban'"

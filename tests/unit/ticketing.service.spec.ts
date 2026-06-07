@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { fetchTicketing, priorityScore } from '@/services/ticketing.service'
+import {
+  fetchTicketing,
+  priorityScore,
+  createTicket,
+  deleteTicket,
+} from '@/services/ticketing.service'
 
 describe('ticketing.service', () => {
   it('renvoie tickets, assignés, roadmap, gantt et axes', async () => {
@@ -23,5 +28,14 @@ describe('ticketing.service', () => {
   it('priorityScore = impact ÷ effort (arrondi)', () => {
     expect(priorityScore({ impact: 90, effort: 5 })).toBe(18)
     expect(priorityScore({ impact: 60, effort: 0 })).toBe(60)
+  })
+})
+
+describe('ticketing — garde-fous (hors Supabase)', () => {
+  it('createTicket lève sans Supabase', async () => {
+    await expect(createTicket({ title: 'X', type: 'bug', priority: 'P1' })).rejects.toThrow()
+  })
+  it('deleteTicket lève sans Supabase', async () => {
+    await expect(deleteTicket('x')).rejects.toThrow()
   })
 })
