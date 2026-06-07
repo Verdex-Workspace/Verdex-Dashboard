@@ -39,13 +39,15 @@ onMounted(async () => {
 <template>
   <div>
     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px">
-      <VTabs v-model="tab" :items="tabs" />
-      <span style="flex: 1" />
+      <div style="flex: 1; min-width: 0; overflow-x: auto">
+        <VTabs v-model="tab" :items="tabs" />
+      </div>
       <button
         v-if="onUntrack && tool.repo"
         type="button"
         class="mono"
         style="
+          flex: none;
           font-size: 10.5px;
           border: 1px solid var(--line);
           background: var(--paper2);
