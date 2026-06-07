@@ -1,16 +1,19 @@
 /**
  * Fonction serverless Vercel : agrège les données GitHub d'un dépôt
- * (description, README, commits, PR, issues, déploiements).
+ * (description, README, commits, PR, issues, déploiements, méta).
  *
- * Le jeton GitHub reste **côté serveur** (variable d'env `GITHUB_TOKEN`),
- * jamais exposé au navigateur. Sans jeton, l'API publique GitHub est utilisée
- * (limite de débit plus basse). Réponses mises en cache 5 min par le CDN.
+ * 🔒 Sécurité : l'appel exige un **jeton de session Supabase valide**
+ * (en-tête Authorization: Bearer …), vérifié côté serveur. Indispensable dès
+ * lors que le `GITHUB_TOKEN` peut lire des dépôts privés.
  *
- * Usage : GET /api/github?repo=owner/name
+ * Le `GITHUB_TOKEN` reste **côté serveur**, jamais exposé au navigateur.
+ *
+ * Usage : GET /api/github?repo=owner/name  (Authorization: Bearer <supabase access_token>)
  */
 
 interface VercelRequest {
   query: Record<string, string | string[] | undefined>
+  headers: Record<string, string | string[] | undefined>
 }
 interface VercelResponse {
   status: (code: number) => VercelResponse
@@ -20,7 +23,7 @@ interface VercelResponse {
 
 const API = 'https://api.github.com'
 
-function headers() {
+function ghHeaders() {
   const h: Record<string, string> = {
     Accept: 'application/vnd.github+json',
     'User-Agent': 'verdex-dashboard',
@@ -28,6 +31,22 @@ function headers() {
   }
   if (process.env.GITHUB_TOKEN) h.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`
   return h
+}
+
+/** Vérifie le jeton de session Supabase auprès de l'API Auth. */
+async function verifyUser(token: string | undefined): Promise<boolean> {
+  if (!token) return false
+  const url = process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL
+  const anon = process.env.VITE_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY
+  if (!url || !anon) return false
+  try {
+    const res = await fetch(`${url}/auth/v1/user`, {
+      headers: { Authorization: `Bearer ${token}`, apikey: anon },
+    })
+    return res.ok
+  } catch {
+    return false
+  }
 }
 
 function relativeAge(iso: string): string {
@@ -40,7 +59,7 @@ function relativeAge(iso: string): string {
 
 async function gh<T>(path: string): Promise<T | null> {
   try {
-    const res = await fetch(`${API}${path}`, { headers: headers() })
+    const res = await fetch(`${API}${path}`, { headers: ghHeaders() })
     if (!res.ok) return null
     return (await res.json()) as T
   } catch {
@@ -51,7 +70,7 @@ async function gh<T>(path: string): Promise<T | null> {
 async function readme(repo: string): Promise<string | null> {
   try {
     const res = await fetch(`${API}/repos/${repo}/readme`, {
-      headers: { ...headers(), Accept: 'application/vnd.github.raw' },
+      headers: { ...ghHeaders(), Accept: 'application/vnd.github.raw' },
     })
     if (!res.ok) return null
     return await res.text()
@@ -61,6 +80,14 @@ async function readme(repo: string): Promise<string | null> {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const authHeader = req.headers?.authorization ?? req.headers?.Authorization
+  const raw = Array.isArray(authHeader) ? authHeader[0] : authHeader
+  const token = raw?.startsWith('Bearer ') ? raw.slice(7) : undefined
+  if (!(await verifyUser(token))) {
+    res.status(401).json({ error: 'unauthorized' })
+    return
+  }
+
   const repoParam = req.query.repo
   const repo = Array.isArray(repoParam) ? repoParam[0] : repoParam
   if (!repo || !/^[\w.-]+\/[\w.-]+$/.test(repo)) {
@@ -68,7 +95,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  type RepoInfo = { description: string | null }
+  type RepoInfo = { description: string | null; language: string | null; private: boolean }
   type CommitItem = { sha: string; commit: { message: string; author: { date: string } } }
   type PrItem = { number: number; title: string; draft: boolean }
   type IssueItem = {
@@ -93,6 +120,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
+  const issueList = (issues ?? []).filter((i) => !i.pull_request)
+  const prList = pulls ?? []
+
   const payload = {
     description: info?.description ?? null,
     readme: readmeText,
@@ -101,28 +131,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       message: c.commit.message.split('\n')[0],
       age: relativeAge(c.commit.author.date),
     })),
-    pullRequests: (pulls ?? []).map((p) => ({
+    pullRequests: prList.map((p) => ({
       id: String(p.number),
       title: p.title,
       status: p.draft ? 'warn' : 'ok',
       detail: p.draft ? 'brouillon' : 'ouverte',
     })),
-    issues: (issues ?? [])
-      .filter((i) => !i.pull_request)
-      .map((i) => ({
-        id: String(i.number),
-        kind: 'info',
-        title: i.title,
-        meta: i.labels.map((l) => l.name).join(' · ') || 'issue',
-      })),
+    issues: issueList.map((i) => ({
+      id: String(i.number),
+      kind: 'info',
+      title: i.title,
+      meta: i.labels.map((l) => l.name).join(' · ') || 'issue',
+    })),
     deployments: (deployments ?? []).map((d) => ({
       env: d.environment,
       version: d.ref,
       when: relativeAge(d.created_at),
       status: 'ok',
     })),
+    meta: {
+      name: repo.split('/')[1],
+      language: info?.language ?? null,
+      private: info?.private ?? false,
+      openPrs: prList.length,
+      openIssues: issueList.length,
+    },
   }
 
-  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600')
+  res.setHeader('Cache-Control', 'private, s-maxage=120, stale-while-revalidate=300')
   res.status(200).json(payload)
 }
