@@ -88,13 +88,39 @@ const WRITE_PATHS: Record<string, (repo: string) => string> = {
   release: (r) => `/repos/${r}/releases`,
 }
 
-/** Crée une ressource GitHub (issue, label, milestone, release). */
+/** Crée une ressource GitHub (issue, label, milestone, release) ou ferme une issue. */
 async function writeAction(body: unknown, res: VercelResponse) {
   const b = (body ?? {}) as { repo?: string; action?: string; payload?: Record<string, unknown> }
   if (!b.repo || !/^[\w.-]+\/[\w.-]+$/.test(b.repo) || !b.action) {
     res.status(400).json({ error: 'invalid request' })
     return
   }
+
+  // Fermeture d'une issue (PATCH) — l'API REST ne permet pas de supprimer une issue.
+  if (b.action === 'close-issue') {
+    const num = Number((b.payload as { number?: number } | undefined)?.number)
+    if (!num) {
+      res.status(400).json({ error: 'missing issue number' })
+      return
+    }
+    try {
+      const r = await fetch(`${API}/repos/${b.repo}/issues/${num}`, {
+        method: 'PATCH',
+        headers: { ...ghHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ state: 'closed' }),
+      })
+      const data = (await r.json()) as Record<string, unknown>
+      if (!r.ok) {
+        res.status(r.status).json({ error: (data?.message as string) ?? 'github error' })
+        return
+      }
+      res.status(200).json({ ok: true, url: data.html_url ?? null, number: num, name: null })
+    } catch {
+      res.status(502).json({ error: 'github unreachable' })
+    }
+    return
+  }
+
   const pathFor = WRITE_PATHS[b.action]
   if (!pathFor) {
     res.status(400).json({ error: 'unknown action' })

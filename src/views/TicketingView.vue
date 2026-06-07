@@ -2,7 +2,7 @@
 import { computed, markRaw, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { VButton, VFrame, VSheetHeader, VTabs } from '@/components/ui'
-import { fetchTicketing } from '@/services/ticketing.service'
+import { fetchTicketing, deleteTicket } from '@/services/ticketing.service'
 import { fetchTools } from '@/services/projects.service'
 import { useUiStore } from '@/stores/ui'
 import { useDetailStore } from '@/stores/detail'
@@ -90,8 +90,14 @@ function openTicket(ticket: Ticket) {
     title: `#${ticket.ref} ${ticket.title}`,
     sub: `${ticket.type} · ${ticket.priority} · ${ticket.toolId ?? '—'}`,
     component: markRaw(TicketDetailPanel),
-    props: { ticket, assignees: assignees.value, repos: repos.value },
+    props: { ticket, assignees: assignees.value, repos: repos.value, onDelete: removeTicket },
   })
+}
+
+async function removeTicket(ticket: Ticket) {
+  await deleteTicket(ticket.id)
+  tickets.value = tickets.value.filter((t) => t.id !== ticket.id)
+  detail.close()
 }
 
 /** Mode démo : ajout local (non persistant). */

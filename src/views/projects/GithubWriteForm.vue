@@ -53,6 +53,8 @@ function buildPayload(): Record<string, unknown> {
       }
     case 'release':
       return { tag_name: f.tag, name: f.name || f.tag, body: f.body, draft: f.draft }
+    default:
+      return {}
   }
 }
 
