@@ -2,8 +2,51 @@
 import { VBox, VChip, VFrame, VKpi } from '@/components/ui'
 import type { AuditScore, Vulnerability } from '@/types'
 
-defineProps<{ scores: AuditScore[]; vulnerabilities: Vulnerability[] }>()
+const props = defineProps<{ scores: AuditScore[]; vulnerabilities: Vulnerability[] }>()
 defineEmits<{ open: [vulnerability: Vulnerability] }>()
+
+function esc(s: string): string {
+  return s.replace(
+    /[&<>"]/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] as string,
+  )
+}
+
+/** Export PDF côté navigateur : ouvre une fenêtre d'impression dédiée au rapport. */
+function exportPdf() {
+  const kpis = props.scores
+    .map((s) => `<div class="kpi"><b>${esc(s.value)}</b><span>${esc(s.key)}</span></div>`)
+    .join('')
+  const rows = props.vulnerabilities
+    .map(
+      (v) =>
+        `<tr><td>${esc(v.severityLabel)}</td><td>${esc(v.cvss)}</td><td>${esc(v.finding)}</td><td>${esc(v.component)}</td></tr>` +
+        `<tr class="detail"><td colspan="4"><b>Pourquoi :</b> ${esc(v.why)}<br><b>Remédiation :</b> ${esc(v.how)}</td></tr>`,
+    )
+    .join('')
+  const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8" />
+<title>Rapport d'audit — Verdex</title><style>
+body{font-family:system-ui,sans-serif;color:#13261d;margin:32px;}
+h1{color:#10996b;} .kpis{display:flex;gap:16px;flex-wrap:wrap;margin:16px 0;}
+.kpi{border:1px solid #cfd9d1;border-radius:8px;padding:10px 14px;}
+.kpi b{display:block;font-size:20px;} .kpi span{font-size:11px;color:#6b776f;}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px;}
+th,td{border:1px solid #dfe6e0;padding:7px 9px;text-align:left;vertical-align:top;}
+th{background:#eef3f0;} tr.detail td{font-size:12px;color:#41514a;background:#f7faf8;}
+</style></head><body>
+<h1>Rapport d'audit de sécurité — Verdex</h1>
+<p>Généré le ${new Date().toLocaleString('fr-FR')}</p>
+<div class="kpis">${kpis}</div>
+<table><thead><tr><th>Sévérité</th><th>CVSS</th><th>Finding</th><th>Composant</th></tr></thead>
+<tbody>${rows}</tbody></table>
+</body></html>`
+  const w = window.open('', '_blank')
+  if (!w) return
+  w.document.write(html)
+  w.document.close()
+  w.focus()
+  w.print()
+}
 </script>
 
 <template>
@@ -54,9 +97,7 @@ defineEmits<{ open: [vulnerability: Vulnerability] }>()
     <!-- Export -->
     <VFrame cap="Export du rapport" tag="livrable">
       <div style="display: flex; gap: 8px; flex-wrap: wrap">
-        <button class="btnw pri" type="button" disabled style="opacity: 0.8; cursor: not-allowed">
-          ↓ PDF complet <VChip :dot="false">à venir</VChip>
-        </button>
+        <button class="btnw pri" type="button" @click="exportPdf">↓ Exporter en PDF</button>
         <button class="btnw" type="button" disabled style="opacity: 0.8; cursor: not-allowed">
           ☁ Proton Drive <VChip :dot="false">à venir</VChip>
         </button>

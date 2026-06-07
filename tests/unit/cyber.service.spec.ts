@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { fetchAudit, runAudit } from '@/services/cyber.service'
+import { fetchAudit, runAudit, runSynthesis } from '@/services/cyber.service'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -38,7 +38,7 @@ describe('runAudit', () => {
           }),
       }),
     )
-    const r = await runAudit({ repo: 'o/r', checks: [] })
+    const r = await runAudit({ synthesis: 'S', checks: [] })
     expect(r.vulnerabilities).toHaveLength(1)
     expect(r.scores[0].value).toBe('88 / 100')
   })
@@ -51,7 +51,7 @@ describe('runAudit', () => {
         json: () => Promise.resolve({ fallback: true, scores: [], vulnerabilities: [] }),
       }),
     )
-    const r = await runAudit({ repo: null, checks: [] })
+    const r = await runAudit({ checks: [] })
     expect(r.vulnerabilities.length).toBeGreaterThan(0) // mock
   })
 
@@ -65,5 +65,33 @@ describe('runAudit', () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network')))
     const r = await runAudit({ checks: [] })
     expect(r.vulnerabilities.length).toBeGreaterThan(0)
+  })
+})
+
+describe('runSynthesis', () => {
+  it("renvoie la synthèse de l'API quand présente", async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            fallback: false,
+            synthesis: 'Infra exposée.',
+            questions: ['Q1'],
+            topology: { servers: ['s1'], networks: [], ports: ['5432'] },
+          }),
+      }),
+    )
+    const r = await runSynthesis({ documents: [] })
+    expect(r.synthesis).toBe('Infra exposée.')
+    expect(r.topology.ports).toContain('5432')
+  })
+
+  it('repli mock si fallback / erreur', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }))
+    const r = await runSynthesis({ documents: [] })
+    expect(r.synthesis.length).toBeGreaterThan(0) // mock AUDIT_SYNTHESIS
+    expect(r.questions.length).toBeGreaterThan(0)
   })
 })

@@ -154,7 +154,9 @@ OpenAI, ou Ollama (local) — on change de fournisseur via l'env, sans toucher a
 - [ ] Choisir un modèle dans le catalogue [github.com/marketplace/models](https://github.com/marketplace/models)
       — ⚠️ **pas de modèle Anthropic/Claude** dans ce catalogue ; privilégier un modèle
       de raisonnement (ex. `openai/gpt-4.1`, `deepseek/DeepSeek-R1`).
-- [ ] Appliquer la migration `0008_audit_reports.sql` (`supabase db push`).
+- [ ] Appliquer les migrations `0008_audit_reports.sql` **et** `0009_audit_documents.sql`
+      (`supabase db push`) — `0009` crée aussi le **bucket Storage privé `audit-docs`**
+      pour les documents fournis (le texte extrait est analysé par le LLM).
 - ➡️ **À mettre dans Vercel** (secrets serveur) :
   - `LLM_BASE_URL=https://models.github.ai/inference`
   - `LLM_API_KEY=<votre PAT>`

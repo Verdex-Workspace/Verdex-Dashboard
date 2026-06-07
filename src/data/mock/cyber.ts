@@ -1,6 +1,23 @@
-import type { AuditCheck, AuditScore, AuditSource, Vulnerability } from '@/types'
+import type { AuditCheck, AuditScore, AuditSource, AuditSynthesis, Vulnerability } from '@/types'
 
 /** Données mock du module Cybersécurité (remplacées plus tard par l'audit réel). */
+
+/** Synthèse + topologie mock (repli démo de l'étape Analyse IA / Schémas). */
+export const AUDIT_SYNTHESIS: AuditSynthesis = {
+  synthesis:
+    "L'infrastructure repose sur une stack Docker exposée derrière Nginx. La base PostgreSQL de production est joignable publiquement (port 5432) et un secret d'API figure dans un .env commité. Plusieurs images de base sont obsolètes et TLS 1.0 reste accepté sur le reverse-proxy.",
+  questions: [
+    'Quels ports sont exposés publiquement ?',
+    'Y a-t-il des secrets en clair dans les sources ?',
+    "Quelle est la surface d'attaque exposée ?",
+    'Quelles versions sont obsolètes (CVE) ?',
+  ],
+  topology: {
+    servers: ['db-prod (PostgreSQL 16)', 'novaweb-api (Node)', 'traefik (reverse-proxy)'],
+    networks: ['DMZ publique', 'réseau interne app', 'VLAN base de données'],
+    ports: ['5432 → PostgreSQL (exposé ⚠)', '443 → Traefik (TLS)', '80 → redirection HTTPS'],
+  },
+}
 
 export const AUDIT_SOURCES: AuditSource[] = [
   { id: 's1', name: 'infra-prod.pdf', status: 'ok', statusLabel: 'indexé' },

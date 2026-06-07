@@ -1,20 +1,27 @@
-import type { AuditData, AuditResult, AuditScore, Vulnerability } from '@/types'
+import type {
+  AuditData,
+  AuditDocument,
+  AuditResult,
+  AuditScore,
+  AuditSynthesis,
+  Vulnerability,
+} from '@/types'
 import {
   AUDIT_CHECKS,
   AUDIT_QUESTIONS,
   AUDIT_SCORES,
   AUDIT_SOURCES,
+  AUDIT_SYNTHESIS,
   VULNERABILITIES,
 } from '@/data/mock/cyber'
+import { extractText } from '@/lib/pdf'
 import { supabase } from '@/lib/supabase'
 
 /**
- * Service du module Cybersécurité.
- *
- * - Audit réel via la fonction serverless `/api/audit` (signaux GitHub → analyse
- *   Claude → score CVSS local). Repli mock si l'API n'est pas configurée.
- * - Rapports persistés dans Supabase (`audit_reports`, RLS) quand disponible.
- * - Le scaffolding du pipeline (sources/questions/checks) reste statique.
+ * Service du module Cybersécurité — pipeline documentaire :
+ * documents (Supabase Storage) → synthèse IA (`/api/synthesis`) → audit
+ * (`/api/audit`, score CVSS local) → rapport (Supabase `audit_reports`).
+ * Repli mock de bout en bout sans Supabase/LLM (mode démo).
  */
 function delay<T>(value: T, ms = 120): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(value), ms))
@@ -29,19 +36,127 @@ async function authHeader(): Promise<Record<string, string>> {
 
 const MOCK_RESULT: AuditResult = { scores: AUDIT_SCORES, vulnerabilities: VULNERABILITIES }
 
+// ---------------------------------------------------------------------------
+// Documents (Sources)
+// ---------------------------------------------------------------------------
+
+function kindOf(name: string): string {
+  const ext = name.split('.').pop()?.toLowerCase() ?? ''
+  return ext || 'doc'
+}
+
+interface DocRow {
+  id: string
+  name: string
+  status: string
+  content: string | null
+}
+
+/** Téléverse un document : extraction texte → Storage → table (ou local en démo). */
+export async function uploadDocument(file: File, clientId = 'me'): Promise<AuditDocument> {
+  const content = await extractText(file)
+  const status = /\.(env|pem|key)$/i.test(file.name) ? 'warn' : 'ok'
+  const statusLabel = status === 'warn' ? 'sensible' : 'indexé'
+  if (!supabase) {
+    return { id: `local-${Date.now()}`, name: file.name, status, statusLabel, content }
+  }
+  const path = `${clientId}/${Date.now()}-${file.name}`
+  await supabase.storage.from('audit-docs').upload(path, file, { upsert: true })
+  const { data } = await supabase
+    .from('audit_documents')
+    .insert({
+      client_id: clientId,
+      name: file.name,
+      path,
+      kind: kindOf(file.name),
+      status,
+      content,
+    })
+    .select()
+    .single()
+  const id = (data as { id?: string } | null)?.id ?? `doc-${Date.now()}`
+  return { id, name: file.name, status, statusLabel, content }
+}
+
+/** Liste les documents ingérés (repli mock en démo). */
+export async function listDocuments(clientId: string): Promise<AuditDocument[]> {
+  if (!supabase) {
+    return delay(AUDIT_SOURCES.map((s) => ({ ...s, content: '' })))
+  }
+  const { data, error } = await supabase
+    .from('audit_documents')
+    .select('id, name, status, content')
+    .eq('client_id', clientId)
+    .order('created_at', { ascending: true })
+  if (error || !data) return []
+  return (data as DocRow[]).map((r) => ({
+    id: r.id,
+    name: r.name,
+    status: r.status === 'warn' ? 'warn' : 'ok',
+    statusLabel: r.status === 'warn' ? 'sensible' : 'indexé',
+    content: r.content ?? '',
+  }))
+}
+
+/** Supprime un document (no-op en démo). */
+export async function removeDocument(id: string): Promise<void> {
+  if (!supabase) return
+  await supabase.from('audit_documents').delete().eq('id', id)
+}
+
+// ---------------------------------------------------------------------------
+// Pipeline (synthèse → audit)
+// ---------------------------------------------------------------------------
+
+function docPayload(documents: AuditDocument[]) {
+  return documents.map((d) => ({ name: d.name, content: d.content }))
+}
+
+export interface SynthesisInput {
+  documents: AuditDocument[]
+  notes?: string
+}
+
+/** Synthèse IA des documents ; repli mock si LLM/réseau indisponible. */
+export async function runSynthesis(input: SynthesisInput): Promise<AuditSynthesis> {
+  try {
+    const res = await fetch('/api/synthesis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+      body: JSON.stringify({ documents: docPayload(input.documents), notes: input.notes }),
+    })
+    if (!res.ok) return AUDIT_SYNTHESIS
+    const data = (await res.json()) as Partial<AuditSynthesis> & { fallback?: boolean }
+    if (data.fallback || !data.synthesis) return AUDIT_SYNTHESIS
+    return {
+      synthesis: data.synthesis,
+      questions: data.questions ?? [],
+      topology: data.topology ?? AUDIT_SYNTHESIS.topology,
+    }
+  } catch {
+    return AUDIT_SYNTHESIS
+  }
+}
+
 export interface AuditInput {
-  repo?: string | null
+  synthesis?: string
+  documents?: AuditDocument[]
   checks?: string[]
   notes?: string
 }
 
-/** Lance un audit via `/api/audit` ; repli mock si indisponible/non configuré. */
+/** Lance l'audit via `/api/audit` ; repli mock si indisponible/non configuré. */
 export async function runAudit(input: AuditInput): Promise<AuditResult> {
   try {
     const res = await fetch('/api/audit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
-      body: JSON.stringify(input),
+      body: JSON.stringify({
+        synthesis: input.synthesis,
+        documents: docPayload(input.documents ?? []),
+        checks: input.checks,
+        notes: input.notes,
+      }),
     })
     if (!res.ok) return MOCK_RESULT
     const data = (await res.json()) as Partial<AuditResult> & { fallback?: boolean }
@@ -52,30 +167,32 @@ export async function runAudit(input: AuditInput): Promise<AuditResult> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Rapports
+// ---------------------------------------------------------------------------
+
 interface ReportRow {
   id: string
-  repo: string | null
   scores: AuditScore[]
   vulnerabilities: Vulnerability[]
   created_at: string
 }
 
-/** Persiste un rapport d'audit (no-op hors Supabase). */
 export async function saveReport(
   result: AuditResult,
-  repo: string | null,
+  meta: { synthesis?: string; documents?: string[] },
   clientId = 'me',
 ): Promise<void> {
   if (!supabase) return
   await supabase.from('audit_reports').insert({
     client_id: clientId,
-    repo,
     scores: result.scores,
     vulnerabilities: result.vulnerabilities,
+    synthesis: meta.synthesis ?? null,
+    documents: meta.documents ?? [],
   })
 }
 
-/** Dernier rapport persisté pour un client (ou null). */
 export async function fetchLatestReport(clientId: string): Promise<AuditResult | null> {
   if (!supabase) return null
   const { data, error } = await supabase
