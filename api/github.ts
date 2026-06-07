@@ -10,18 +10,9 @@
  *
  * Usage : GET /api/github?repo=owner/name  (Authorization: Bearer <supabase access_token>)
  */
-
-interface VercelRequest {
-  method?: string
-  query: Record<string, string | string[] | undefined>
-  headers: Record<string, string | string[] | undefined>
-  body?: unknown
-}
-interface VercelResponse {
-  status: (code: number) => VercelResponse
-  setHeader: (name: string, value: string) => void
-  json: (body: unknown) => void
-}
+import type { VercelRequest, VercelResponse } from './_lib/http'
+import { getBearerToken } from './_lib/http'
+import { verifyUser } from './_lib/auth'
 
 const API = 'https://api.github.com'
 
@@ -33,22 +24,6 @@ function ghHeaders() {
   }
   if (process.env.GITHUB_TOKEN) h.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`
   return h
-}
-
-/** Vérifie le jeton de session Supabase auprès de l'API Auth. */
-async function verifyUser(token: string | undefined): Promise<boolean> {
-  if (!token) return false
-  const url = process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL
-  const anon = process.env.VITE_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY
-  if (!url || !anon) return false
-  try {
-    const res = await fetch(`${url}/auth/v1/user`, {
-      headers: { Authorization: `Bearer ${token}`, apikey: anon },
-    })
-    return res.ok
-  } catch {
-    return false
-  }
 }
 
 function relativeAge(iso: string): string {
@@ -230,9 +205,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  const authHeader = req.headers?.authorization ?? req.headers?.Authorization
-  const raw = Array.isArray(authHeader) ? authHeader[0] : authHeader
-  const token = raw?.startsWith('Bearer ') ? raw.slice(7) : undefined
+  const token = getBearerToken(req)
   if (!(await verifyUser(token))) {
     res.status(401).json({ error: 'unauthorized' })
     return
