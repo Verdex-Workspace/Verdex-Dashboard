@@ -1,4 +1,5 @@
 import type { Assignee, GanttTask, Label, RoadmapItem, Ticket } from '@/types'
+import { LABEL_CATALOG } from '@/views/ticketing/helpers'
 
 /** Données mock du module Ticketing (remplacées plus tard par Supabase). */
 
@@ -8,14 +9,8 @@ export const ASSIGNEES: Assignee[] = [
   { id: 'sam', name: 'Sam', initials: 'SA' },
 ]
 
-const L = {
-  backend: { id: 'backend', name: 'backend', kind: 'info' } as Label,
-  frontend: { id: 'frontend', name: 'frontend', kind: 'info' } as Label,
-  security: { id: 'security', name: 'sécurité', kind: 'err' } as Label,
-  infra: { id: 'infra', name: 'infra', kind: 'warn' } as Label,
-  perf: { id: 'perf', name: 'perf', kind: 'warn' } as Label,
-  ux: { id: 'ux', name: 'ux', kind: 'info' } as Label,
-}
+/** Raccourci d'accès au catalogue de labels partagé (par id). */
+const L = Object.fromEntries(LABEL_CATALOG.map((l) => [l.id, l])) as Record<string, Label>
 
 export const TICKETS: Ticket[] = [
   {
@@ -35,6 +30,9 @@ export const TICKETS: Ticket[] = [
     labels: [L.backend, L.perf],
     deadline: '2026-06-10',
     sprint: 'S24',
+    milestone: 'v1.2',
+    size: 'M',
+    estimate: 3,
     linkedPrs: [],
     linkedIssues: [{ id: 'i1', label: 'novaweb-api#i1' }],
     createdAt: '2026-06-02',
@@ -57,6 +55,9 @@ export const TICKETS: Ticket[] = [
     labels: [L.security, L.infra],
     deadline: '2026-06-08',
     sprint: 'S24',
+    milestone: 'v1.2',
+    size: 'S',
+    estimate: 2,
     linkedPrs: [{ id: 'pr212', label: 'novaweb-api#212' }],
     linkedIssues: [],
     createdAt: '2026-06-01',
@@ -78,6 +79,9 @@ export const TICKETS: Ticket[] = [
     labels: [L.backend, L.perf],
     deadline: '2026-06-12',
     sprint: 'S24',
+    milestone: 'v1.2',
+    size: 'S',
+    estimate: 2,
     linkedPrs: [{ id: 'pr214', label: 'novaweb-api#214' }],
     linkedIssues: [],
     createdAt: '2026-05-30',
@@ -99,6 +103,9 @@ export const TICKETS: Ticket[] = [
     labels: [L.backend, L.security],
     deadline: '2026-06-20',
     sprint: 'S25',
+    milestone: 'v1.3',
+    size: 'M',
+    estimate: 3,
     linkedPrs: [{ id: 'pr209', label: 'novaweb-api#209' }],
     linkedIssues: [],
     createdAt: '2026-06-03',
@@ -120,6 +127,9 @@ export const TICKETS: Ticket[] = [
     labels: [L.backend, L.perf],
     deadline: '2026-07-01',
     sprint: null,
+    milestone: null,
+    size: 'L',
+    estimate: 5,
     linkedPrs: [],
     linkedIssues: [{ id: 'i2', label: 'billing-service#i2' }],
     createdAt: '2026-05-28',
@@ -141,6 +151,9 @@ export const TICKETS: Ticket[] = [
     labels: [L.backend],
     deadline: '2026-06-15',
     sprint: 'S25',
+    milestone: 'v1.2',
+    size: 'M',
+    estimate: 3,
     linkedPrs: [{ id: 'pr50', label: 'billing-service#50' }],
     linkedIssues: [{ id: 'i1', label: 'billing-service#i1' }],
     createdAt: '2026-06-02',
@@ -163,6 +176,9 @@ export const TICKETS: Ticket[] = [
     labels: [L.frontend, L.perf, L.ux],
     deadline: '2026-06-18',
     sprint: 'S25',
+    milestone: 'v1.3',
+    size: 'S',
+    estimate: 2,
     linkedPrs: [],
     linkedIssues: [],
     createdAt: '2026-06-01',
@@ -184,6 +200,9 @@ export const TICKETS: Ticket[] = [
     labels: [L.frontend, L.ux],
     deadline: null,
     sprint: null,
+    milestone: null,
+    size: 'M',
+    estimate: null,
     linkedPrs: [],
     linkedIssues: [],
     createdAt: '2026-05-25',
@@ -206,6 +225,9 @@ export const TICKETS: Ticket[] = [
     labels: [L.backend, L.infra],
     deadline: '2026-06-11',
     sprint: 'S24',
+    milestone: 'v1.2',
+    size: 'S',
+    estimate: 2,
     linkedPrs: [],
     linkedIssues: [{ id: 'i1', label: 'data-scraper#i1' }],
     createdAt: '2026-06-04',
@@ -227,6 +249,9 @@ export const TICKETS: Ticket[] = [
     labels: [L.backend, L.security],
     deadline: '2026-06-04',
     sprint: 'S23',
+    milestone: 'v1.1',
+    size: 'L',
+    estimate: 5,
     linkedPrs: [{ id: 'pr120', label: 'auth-gateway#120' }],
     linkedIssues: [],
     createdAt: '2026-05-20',
@@ -248,6 +273,9 @@ export const TICKETS: Ticket[] = [
     labels: [L.backend, L.infra],
     deadline: '2026-07-05',
     sprint: null,
+    milestone: 'v2.0',
+    size: 'XL',
+    estimate: 8,
     linkedPrs: [],
     linkedIssues: [{ id: 'i1', label: 'verdex-dashboard#i1' }],
     createdAt: '2026-06-06',
@@ -269,6 +297,9 @@ export const TICKETS: Ticket[] = [
     labels: [L.backend],
     deadline: null,
     sprint: null,
+    milestone: null,
+    size: 'M',
+    estimate: null,
     linkedPrs: [],
     linkedIssues: [],
     createdAt: '2026-05-22',

@@ -4,6 +4,7 @@ import type {
   Ticket,
   TicketingData,
   TicketPriority,
+  TicketSize,
   TicketStatus,
   TicketType,
 } from '@/types'
@@ -46,6 +47,9 @@ interface TicketRow {
   labels: Label[]
   deadline: string | null
   sprint: string | null
+  milestone: string | null
+  size: TicketSize | null
+  estimate: number | null
   linked_prs: LinkedRef[]
   linked_issues: LinkedRef[]
   created_at: string
@@ -69,6 +73,9 @@ function rowToTicket(r: TicketRow): Ticket {
     labels: r.labels ?? [],
     deadline: r.deadline,
     sprint: r.sprint,
+    milestone: r.milestone ?? null,
+    size: r.size ?? null,
+    estimate: r.estimate ?? null,
     linkedPrs: r.linked_prs ?? [],
     linkedIssues: r.linked_issues ?? [],
     createdAt: r.created_at,
@@ -103,6 +110,9 @@ export interface NewTicket {
   labels?: Label[]
   deadline?: string | null
   sprint?: string | null
+  milestone?: string | null
+  size?: TicketSize | null
+  estimate?: number | null
 }
 
 export async function createTicket(input: NewTicket): Promise<Ticket> {
@@ -121,6 +131,9 @@ export async function createTicket(input: NewTicket): Promise<Ticket> {
     labels: input.labels ?? [],
     deadline: input.deadline ?? null,
     sprint: input.sprint ?? null,
+    milestone: input.milestone ?? null,
+    size: input.size ?? null,
+    estimate: input.estimate ?? null,
     linked_prs: [],
     linked_issues: [],
   }
@@ -135,16 +148,58 @@ export async function deleteTicket(id: string): Promise<void> {
   if (error) throw error
 }
 
-/** Met à jour partiellement un ticket (statut, liens PR/issues). */
-export async function updateTicket(
-  id: string,
-  patch: { status?: TicketStatus; linkedIssues?: LinkedRef[]; linkedPrs?: LinkedRef[] },
-): Promise<void> {
+/** Champs d'un ticket modifiables après création. */
+export type TicketPatch = Partial<
+  Pick<
+    Ticket,
+    | 'title'
+    | 'description'
+    | 'type'
+    | 'priority'
+    | 'status'
+    | 'effort'
+    | 'impact'
+    | 'toolId'
+    | 'assigneeId'
+    | 'labels'
+    | 'deadline'
+    | 'sprint'
+    | 'milestone'
+    | 'size'
+    | 'estimate'
+    | 'linkedIssues'
+    | 'linkedPrs'
+  >
+>
+
+/** Correspondance camelCase (modèle) → snake_case (colonne Postgres). */
+const PATCH_COLUMNS: Record<keyof TicketPatch, string> = {
+  title: 'title',
+  description: 'description',
+  type: 'type',
+  priority: 'priority',
+  status: 'status',
+  effort: 'effort',
+  impact: 'impact',
+  toolId: 'tool_id',
+  assigneeId: 'assignee_id',
+  labels: 'labels',
+  deadline: 'deadline',
+  sprint: 'sprint',
+  milestone: 'milestone',
+  size: 'size',
+  estimate: 'estimate',
+  linkedIssues: 'linked_issues',
+  linkedPrs: 'linked_prs',
+}
+
+/** Met à jour partiellement un ticket (n'importe quel champ éditable). */
+export async function updateTicket(id: string, patch: TicketPatch): Promise<void> {
   if (!supabase) throw new Error('Supabase non configuré')
   const row: Record<string, unknown> = { updated_at: new Date().toISOString() }
-  if (patch.status) row.status = patch.status
-  if (patch.linkedIssues) row.linked_issues = patch.linkedIssues
-  if (patch.linkedPrs) row.linked_prs = patch.linkedPrs
+  for (const key of Object.keys(patch) as (keyof TicketPatch)[]) {
+    if (patch[key] !== undefined) row[PATCH_COLUMNS[key]] = patch[key]
+  }
   const { error } = await supabase.from('tickets').update(row).eq('id', id)
   if (error) throw error
 }
