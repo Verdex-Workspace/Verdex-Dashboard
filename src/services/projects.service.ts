@@ -88,8 +88,43 @@ export async function fetchTools(_clientId: string): Promise<Tool[]> {
   // _clientId servira au filtrage multi-espaces (via RLS) ultérieurement.
   if (!supabase) return delay(TOOLS)
   const { data, error } = await supabase.from('tools').select('*').order('name')
-  if (error || !data || data.length === 0) return TOOLS
+  // Erreur réseau → repli mock ; succès (même vide) → données réelles (état vide propre).
+  if (error || !data) return TOOLS
   return (data as ToolRow[]).map(rowToTool)
+}
+
+/**
+ * Ajoute un dépôt au suivi : récupère ses métadonnées GitHub puis insère une
+ * ligne `tools`. Renvoie l'outil créé.
+ */
+export async function trackRepo(repo: string, clientId = 'me'): Promise<Tool> {
+  if (!supabase) throw new Error('Supabase non configuré')
+  const gh = await fetchGithubDetail(repo)
+  if (!gh) throw new Error('Dépôt introuvable ou accès refusé')
+
+  const row = {
+    id: repo,
+    name: gh.meta.name,
+    env: 'prod' as Environment,
+    status: 'ok' as StatusKind,
+    version: '—',
+    stack: gh.meta.language ?? 'GitHub',
+    icon: '▤',
+    open_prs: gh.meta.openPrs,
+    open_issues: gh.meta.openIssues,
+    client_id: clientId,
+    repo,
+  }
+  const { error } = await supabase.from('tools').upsert(row, { onConflict: 'id' })
+  if (error) throw error
+  return rowToTool(row)
+}
+
+/** Retire un dépôt du suivi. */
+export async function untrackRepo(toolId: string): Promise<void> {
+  if (!supabase) throw new Error('Supabase non configuré')
+  const { error } = await supabase.from('tools').delete().eq('id', toolId)
+  if (error) throw error
 }
 
 async function baseDetail(toolId: string): Promise<ToolDetail | null> {

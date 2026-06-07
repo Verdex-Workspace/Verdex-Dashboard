@@ -4,7 +4,7 @@ import { VBar, VBars, VBox, VButton, VChip, VFrame, VKpi, VTabs } from '@/compon
 import { fetchToolDetail } from '@/services/projects.service'
 import type { Environment, StatusKind, Tool, ToolDetail } from '@/types'
 
-const props = defineProps<{ tool: Tool }>()
+const props = defineProps<{ tool: Tool; onUntrack?: (tool: Tool) => void }>()
 
 const ENV_KIND: Record<Environment, StatusKind> = {
   prod: 'ok',
@@ -33,8 +33,28 @@ onMounted(async () => {
 
 <template>
   <div>
-    <div style="margin-bottom: 14px">
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px">
       <VTabs v-model="tab" :items="tabs" />
+      <span style="flex: 1" />
+      <button
+        v-if="onUntrack && tool.repo"
+        type="button"
+        class="mono"
+        style="
+          font-size: 10.5px;
+          border: 1px solid var(--line);
+          background: var(--paper2);
+          color: var(--err);
+          border-radius: 8px;
+          padding: 5px 10px;
+          cursor: pointer;
+          white-space: nowrap;
+        "
+        title="Retirer ce dépôt du suivi"
+        @click="onUntrack(tool)"
+      >
+        ✕ ne plus suivre
+      </button>
     </div>
 
     <p v-if="loading" class="mono" style="color: var(--muted)">Chargement…</p>
