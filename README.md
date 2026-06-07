@@ -103,6 +103,7 @@ pnpm docs:dev       # → http://localhost:5174
 - 🎨 [Design system Verdex](./docs/guide/design-system.md)
 - 🌍 [Environnements & déploiement](./docs/guide/deployment.md)
 - 🧑‍💼 [Guide utilisateur](./docs/user-guide.md)
+- 🧭 [Audit & feuille de route par phases](./docs/AUDIT.md)
 - 🛠️ [Checklist infrastructure (à faire de votre côté)](./docs/infra-setup.md)
 - 🤝 [Guide de contribution](./CONTRIBUTING.md)
 

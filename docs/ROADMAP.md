@@ -19,11 +19,14 @@
 - Workflow : branche `type/sujet` → PR vers `main` → CI verte → merge.
   **Toujours montrer un aperçu avant push.** Compte GitHub : **CocoDevAI**.
 
-## Modules (9) — tous en UI
+## Modules (9) — état réel
 
-✅ Vue d'ensemble · Projets & Outils · Logs & Métriques · Ticketing · Cybersécurité
-· Automations · Admin/Infra · Proton Unlimited · ⏳ **Performance & Gains** (encore
-en page d'aperçu — à compléter).
+- ✅ **Backés (Supabase + GitHub)** : Vue d'ensemble · Projets & Outils · Ticketing.
+- ⏳ **UI en place, backend à brancher** (connecteurs à venir, cf. phases) :
+  Logs & Métriques · Automations · Admin/Infra · Cybersécurité · Proton Unlimited ·
+  Performance & Gains.
+
+> 🧭 **Audit complet & phases** : voir [`docs/AUDIT.md`](./AUDIT.md).
 
 ## Backend réel (Supabase + GitHub)
 
@@ -39,8 +42,8 @@ en page d'aperçu — à compléter).
   via `updateTicket` (patch générique), **pont ticket → issue GitHub** (création + lien
   persistant) et **synchro auto** des éditions vers l'issue liée (état/labels/milestone/
   assignés). **Roadmap & Gantt dérivés des tickets réels** (`derive.ts`).
-- Migrations dans `supabase/migrations/` (jusqu'à `0006_tickets.sql`). Appliquer
-  via `supabase db push`.
+- Migrations dans `supabase/migrations/` (jusqu'à `0007_tickets_fields.sql`).
+  Appliquer via `supabase db push`.
 
 ## Variables d'environnement
 
@@ -48,26 +51,31 @@ en page d'aperçu — à compléter).
 - Serveur (Vercel) : `GITHUB_TOKEN` (fine-grained, `Issues: R/W` + `Contents: R/W`
   pour les écritures ; org `Verdex-Workspace`).
 
-## 🔜 Prochaines étapes (priorisées)
+## 🗺️ Feuille de route par phases (1 PR par phase)
 
-1. ✅ **Champs GitHub complets sur le ticket** (fait).
-   - **Volet A** : `tickets` étendu (`milestone`/`size`/`estimate`, migration `0007`) +
-     **édition inline** dans `TicketDetailPanel` + `AddTicketPanel` enrichi +
-     `updateTicket` patch générique.
-   - **Volet B** : **synchro auto ticket → issue** à chaque édition (état, labels,
-     milestone résolu en numéro, assignés via `githubLogin`, titre/corps) — action write
-     `update-issue` dans `/api/github` + `updateGithubIssue`.
-2. **Reflet automatique multi-vues** : statut/échéance/assigné du ticket pilotent
-   les vues.
-   - ✅ **Gantt & Roadmap data-driven** : dérivés des tickets réels (milestones/
-     deadlines, sprints/size) via `src/views/ticketing/derive.ts` — plus de mock.
-   - ⏳ Kanban (déjà par statut) ; **filtre par assigné** déjà présent ; brancher
-     entièrement sur données réelles.
-3. **Drag-and-drop Kanban** → met à jour `status` (`updateTicket`).
-4. **Performance & Gains** : compléter le module (Web Vitals/Lighthouse, Vercel Analytics).
-5. **Connecteur Proton** (Calendar/Drive/Mail + génération de rapports) — backend
-   dédié ; active les « Actions » du ticket (deadline→Calendar, rapport→Drive, alerte→Mail).
-6. **Wiki GitHub** (git-based) — étape spécifique.
+Détail et justification dans [`docs/AUDIT.md`](./AUDIT.md). Décisions actées :
+Cybersécurité d'abord · connecteurs avec **repli mock** · LLM d'audit = **API Claude**
+· cache prod = **Upstash Redis**.
+
+| Phase | Objectif                                                                          | État        |
+| ----- | --------------------------------------------------------------------------------- | ----------- |
+| 0     | **Audit & cadrage** (AUDIT.md + roadmap)                                          | 🟢 en cours |
+| 1     | **Sécurité & CI/CD** (CodeQL, dependency-review, gitleaks, deploy gaté, en-têtes) | ⏳          |
+| 2     | **Socle backend & cache** (Upstash Redis, abstraction connecteur, `/api/health`)  | ⏳          |
+| 3     | **Cybersécurité** (signaux → API Claude → CVSS → rapport)                         | ⏳          |
+| 4     | **Observabilité** (Prometheus/Loki/Grafana/Traefik)                               | ⏳          |
+| 5     | **Admin / Infra** (Docker, ports, scripts — lecture seule)                        | ⏳          |
+| 6     | **Automations** (connecteur n8n)                                                  | ⏳          |
+| 7     | **Performance & Gains** (Web Vitals, Vercel Analytics)                            | ⏳          |
+| 8     | **Proton Unlimited** (Mail/Calendar/Drive)                                        | ⏳          |
+| 9     | **Finitions** (couverture > 75 %, a11y, i18n, polish)                             | ⏳          |
+
+### Déjà livré (étape 1 « Tickets façon GitHub Projects »)
+
+- **Volet A** : `tickets` étendu (`milestone`/`size`/`estimate`, migration `0007`) +
+  édition inline + `AddTicketPanel` enrichi + `updateTicket` générique.
+- **Volet B** : synchro auto ticket → issue (état/labels/milestone/assignés) via
+  l'action `update-issue` ; **Gantt & Roadmap dérivés des tickets réels** (`derive.ts`).
 
 ## Notes techniques utiles
 
