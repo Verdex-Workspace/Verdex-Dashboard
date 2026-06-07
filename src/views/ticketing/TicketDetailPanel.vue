@@ -11,7 +11,7 @@ import {
   formatDeadline,
 } from './helpers'
 import { priorityScore, updateTicket, type TicketPatch } from '@/services/ticketing.service'
-import { githubWrite } from '@/services/github.service'
+import { githubWrite, updateGithubIssue } from '@/services/github.service'
 import { useAuthStore } from '@/stores/auth'
 import type { Assignee, Label, LinkedRef, Ticket } from '@/types'
 
@@ -45,7 +45,19 @@ const form = reactive({
   labels: [...props.ticket.labels] as Label[],
 })
 const saveMsg = ref<{ ok: boolean; text: string } | null>(null)
+const syncMsg = ref<{ ok: boolean; text: string } | null>(null)
 const deadline = computed(() => formatDeadline(form.deadline || null))
+
+/** Issues liées (état local — alimenté à la création d'issue). */
+const linkedIssues = ref<LinkedRef[]>([...props.ticket.linkedIssues])
+
+/** Champs du ticket qui ont un équivalent natif sur une issue GitHub. */
+const SYNC_FIELDS: (keyof TicketPatch)[] = ['status', 'labels', 'milestone', 'assigneeId']
+
+/** Issue liée synchronisable (créée depuis le dashboard → possède repo + number). */
+const syncTarget = computed<LinkedRef | undefined>(() =>
+  linkedIssues.value.find((i) => i.repo && typeof i.number === 'number'),
+)
 
 /** Ticket reconstruit à partir du modèle local (champs normalisés). */
 function merged(): Ticket {
@@ -75,6 +87,29 @@ async function save(patch: TicketPatch) {
   } catch (e) {
     saveMsg.value = { ok: false, text: e instanceof Error ? e.message : 'Échec.' }
   }
+  // Synchro best-effort vers l'issue GitHub liée (n'annule pas l'édition locale).
+  if (Object.keys(patch).some((k) => SYNC_FIELDS.includes(k as keyof TicketPatch))) {
+    void syncIssue()
+  }
+}
+
+/** Pousse l'état courant du ticket vers l'issue GitHub liée (hors démo). */
+async function syncIssue() {
+  const target = syncTarget.value
+  if (auth.demoMode || !target?.repo || target.number === undefined) return
+  syncMsg.value = null
+  try {
+    const login = props.assignees.find((a) => a.id === form.assigneeId)?.githubLogin
+    await updateGithubIssue(target.repo, target.number, {
+      state: form.status === 'done' ? 'closed' : 'open',
+      labels: form.labels.map((l) => l.name),
+      milestoneTitle: form.milestone.trim() || null,
+      assignees: login ? [login] : [],
+    })
+    syncMsg.value = { ok: true, text: `Issue synchronisée · ${target.label}` }
+  } catch (e) {
+    syncMsg.value = { ok: false, text: e instanceof Error ? e.message : 'Synchro échouée.' }
+  }
 }
 
 function toggleLabel(label: Label) {
@@ -89,7 +124,6 @@ function isActive(label: Label) {
 // --- Pont GitHub : créer une issue depuis le ticket ---
 const repoOptions = computed(() => props.repos ?? [])
 const selectedRepo = ref(repoOptions.value[0]?.repo ?? '')
-const linkedIssues = ref<LinkedRef[]>([...props.ticket.linkedIssues])
 const pushing = ref(false)
 const pushMsg = ref<{ ok: boolean; text: string; url: string | null } | null>(null)
 const canBridge = computed(() => !auth.demoMode && repoOptions.value.length > 0)
@@ -108,8 +142,12 @@ async function pushIssue() {
     const link: LinkedRef = {
       id: String(r.number ?? Date.now()),
       label: `${repoName}#${r.number ?? '?'}`,
+      repo: selectedRepo.value,
+      number: r.number ?? undefined,
     }
     linkedIssues.value = [...linkedIssues.value, link]
+    // Mémoriser le lien (avec repo/number) sur le ticket pour les futures synchros.
+    props.onUpdate?.({ ...merged(), linkedIssues: linkedIssues.value })
     await updateTicket(props.ticket.id, { linkedIssues: linkedIssues.value })
     pushMsg.value = { ok: true, text: `Issue créée · ${link.label}`, url: r.url }
   } catch (e) {
@@ -289,6 +327,17 @@ const capStyle = 'font-size:9.5px;color:var(--muted)'
         }"
       >
         {{ saveMsg.ok ? '✓ ' : '⚠ ' }}{{ saveMsg.text }}
+      </p>
+      <p
+        v-if="syncMsg"
+        class="mono"
+        :style="{
+          fontSize: '10.5px',
+          marginTop: '4px',
+          color: syncMsg.ok ? 'var(--accent)' : 'var(--err)',
+        }"
+      >
+        {{ syncMsg.ok ? '↗ ' : '⚠ ' }}{{ syncMsg.text }}
       </p>
     </VFrame>
 

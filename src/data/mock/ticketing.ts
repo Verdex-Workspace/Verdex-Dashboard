@@ -1,12 +1,12 @@
-import type { Assignee, GanttTask, Label, RoadmapItem, Ticket } from '@/types'
+import type { Assignee, Label, Ticket } from '@/types'
 import { LABEL_CATALOG } from '@/views/ticketing/helpers'
 
 /** Données mock du module Ticketing (remplacées plus tard par Supabase). */
 
 export const ASSIGNEES: Assignee[] = [
-  { id: 'coco', name: 'Coco', initials: 'CO' },
-  { id: 'alex', name: 'Alex', initials: 'AL' },
-  { id: 'sam', name: 'Sam', initials: 'SA' },
+  { id: 'coco', name: 'Coco', initials: 'CO', githubLogin: 'CocoDevAI' },
+  { id: 'alex', name: 'Alex', initials: 'AL', githubLogin: 'alex' },
+  { id: 'sam', name: 'Sam', initials: 'SA', githubLogin: 'sam' },
 ]
 
 /** Raccourci d'accès au catalogue de labels partagé (par id). */
@@ -306,22 +306,3 @@ export const TICKETS: Ticket[] = [
     updatedAt: '2026-05-22',
   },
 ]
-
-export const ROADMAP: RoadmapItem[] = [
-  { id: 'r1', label: 'Cache & perfs', startMonth: 0, span: 2, kind: 'info' },
-  { id: 'r2', label: 'Sécurité & SSO', startMonth: 1, span: 2, kind: 'ok' },
-  { id: 'r3', label: 'Migration PG 16', startMonth: 2, span: 1, kind: 'warn' },
-  { id: 'r4', label: 'Module facturation', startMonth: 1, span: 3, kind: 'info' },
-  { id: 'r5', label: 'Intégration Proton', startMonth: 3, span: 2, kind: 'info' },
-]
-
-export const GANTT: GanttTask[] = [
-  { id: 'g1', label: 'Audit sécurité', startWeek: 0, span: 1, critical: true },
-  { id: 'g2', label: 'Dev API v2', startWeek: 0, span: 3, critical: false },
-  { id: 'g3', label: 'Tests de charge', startWeek: 2, span: 1, critical: true },
-  { id: 'g4', label: 'Déploiement prod', startWeek: 3, span: 1, critical: true },
-  { id: 'g5', label: 'Doc & handoff', startWeek: 3, span: 2, critical: false },
-]
-
-export const MONTHS = ['Juin', 'Juil', 'Août', 'Sept', 'Oct']
-export const WEEKS = ['S22', 'S23', 'S24', 'S25', 'S26', 'S27']

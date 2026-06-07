@@ -14,7 +14,8 @@ import GanttChart from './ticketing/GanttChart.vue'
 import PriorityMatrix from './ticketing/PriorityMatrix.vue'
 import TicketDetailPanel from './ticketing/TicketDetailPanel.vue'
 import AddTicketPanel from './ticketing/AddTicketPanel.vue'
-import type { Assignee, GanttTask, RoadmapItem, Ticket } from '@/types'
+import { deriveGantt, deriveRoadmap } from './ticketing/derive'
+import type { Assignee, Ticket } from '@/types'
 
 const ui = useUiStore()
 const { activeClient } = storeToRefs(ui)
@@ -23,10 +24,6 @@ const auth = useAuthStore()
 
 const tickets = ref<Ticket[]>([])
 const assignees = ref<Assignee[]>([])
-const roadmap = ref<RoadmapItem[]>([])
-const gantt = ref<GanttTask[]>([])
-const months = ref<string[]>([])
-const weeks = ref<string[]>([])
 const repos = ref<{ id: string; name: string; repo: string }[]>([])
 const toolsList = ref<{ id: string; name: string }[]>([])
 const loading = ref(true)
@@ -55,10 +52,6 @@ async function load() {
   ])
   tickets.value = data.tickets
   assignees.value = data.assignees
-  roadmap.value = data.roadmap
-  gantt.value = data.gantt
-  months.value = data.months
-  weeks.value = data.weeks
   nextRef = data.tickets.length ? Math.max(...data.tickets.map((t) => t.ref)) + 1 : 200
   // Dépôts suivis (pour le pont GitHub depuis un ticket).
   repos.value = tls
@@ -74,6 +67,10 @@ watch(() => activeClient.value.id, load)
 const tools = computed(
   () => [...new Set(tickets.value.map((t) => t.toolId).filter(Boolean))] as string[],
 )
+
+// Roadmap & Gantt dérivés des tickets réels (milestones/deadlines, sprints/size).
+const roadmap = computed(() => deriveRoadmap(tickets.value))
+const gantt = computed(() => deriveGantt(tickets.value))
 
 const filtered = computed(() =>
   tickets.value.filter(
@@ -241,8 +238,22 @@ const selectStyle =
           :assignees="assignees"
           @open="openTicket"
         />
-        <RoadmapChart v-else-if="view === 'roadmap'" :items="roadmap" :months="months" />
-        <GanttChart v-else-if="view === 'gantt'" :tasks="gantt" :weeks="weeks" />
+        <template v-else-if="view === 'roadmap'">
+          <RoadmapChart
+            v-if="roadmap.items.length"
+            :items="roadmap.items"
+            :months="roadmap.months"
+          />
+          <p v-else class="mono" style="color: var(--muted); font-size: 11.5px">
+            Aucun jalon daté — renseignez milestone + échéance sur des tickets.
+          </p>
+        </template>
+        <template v-else-if="view === 'gantt'">
+          <GanttChart v-if="gantt.tasks.length" :tasks="gantt.tasks" :weeks="gantt.weeks" />
+          <p v-else class="mono" style="color: var(--muted); font-size: 11.5px">
+            Aucun sprint planifié — renseignez un sprint sur des tickets.
+          </p>
+        </template>
         <PriorityMatrix v-else-if="view === 'matrix'" :tickets="filtered" @open="openTicket" />
       </template>
     </VFrame>
