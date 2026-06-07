@@ -3,6 +3,7 @@ import { computed, markRaw, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { VButton, VFrame, VSheetHeader, VTabs } from '@/components/ui'
 import { fetchTicketing } from '@/services/ticketing.service'
+import { fetchTools } from '@/services/projects.service'
 import { useUiStore } from '@/stores/ui'
 import { useDetailStore } from '@/stores/detail'
 import { useAuthStore } from '@/stores/auth'
@@ -26,6 +27,7 @@ const roadmap = ref<RoadmapItem[]>([])
 const gantt = ref<GanttTask[]>([])
 const months = ref<string[]>([])
 const weeks = ref<string[]>([])
+const repos = ref<{ id: string; name: string; repo: string }[]>([])
 const loading = ref(true)
 
 const view = ref('kanban')
@@ -46,7 +48,10 @@ let nextRef = 200
 
 async function load() {
   loading.value = true
-  const data = await fetchTicketing(activeClient.value.id)
+  const [data, tls] = await Promise.all([
+    fetchTicketing(activeClient.value.id),
+    fetchTools(activeClient.value.id),
+  ])
   tickets.value = data.tickets
   assignees.value = data.assignees
   roadmap.value = data.roadmap
@@ -54,6 +59,10 @@ async function load() {
   months.value = data.months
   weeks.value = data.weeks
   nextRef = data.tickets.length ? Math.max(...data.tickets.map((t) => t.ref)) + 1 : 200
+  // Dépôts suivis (pour le pont GitHub depuis un ticket).
+  repos.value = tls
+    .filter((t) => t.repo)
+    .map((t) => ({ id: t.id, name: t.name, repo: t.repo as string }))
   loading.value = false
 }
 onMounted(load)
@@ -81,7 +90,7 @@ function openTicket(ticket: Ticket) {
     title: `#${ticket.ref} ${ticket.title}`,
     sub: `${ticket.type} · ${ticket.priority} · ${ticket.toolId ?? '—'}`,
     component: markRaw(TicketDetailPanel),
-    props: { ticket, assignees: assignees.value },
+    props: { ticket, assignees: assignees.value, repos: repos.value },
   })
 }
 

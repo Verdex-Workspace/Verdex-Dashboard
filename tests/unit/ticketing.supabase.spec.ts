@@ -28,11 +28,13 @@ vi.mock('@/lib/supabase', () => {
     insert: () => builder,
     single: () => Promise.resolve({ data: row, error: null }),
     delete: () => ({ eq: () => Promise.resolve({ error: null }) }),
+    update: () => ({ eq: () => Promise.resolve({ error: null }) }),
   }
   return { supabase: { from: () => builder }, isSupabaseConfigured: true }
 })
 
-const { fetchTicketing, createTicket, deleteTicket } = await import('@/services/ticketing.service')
+const { fetchTicketing, createTicket, deleteTicket, updateTicket } =
+  await import('@/services/ticketing.service')
 
 describe('ticketing.service (Supabase mocké)', () => {
   it('mappe les lignes `tickets`', async () => {
@@ -49,5 +51,9 @@ describe('ticketing.service (Supabase mocké)', () => {
 
   it('deleteTicket se résout', async () => {
     await expect(deleteTicket('u1')).resolves.toBeUndefined()
+  })
+
+  it('updateTicket se résout', async () => {
+    await expect(updateTicket('u1', { status: 'done' })).resolves.toBeUndefined()
   })
 })
