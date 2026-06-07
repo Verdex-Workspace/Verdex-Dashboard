@@ -13,12 +13,19 @@ fasse le branchement côté code.
 
 Pour que la CI/CD et les déploiements fonctionnent.
 
-- [ ] **Protéger `main`** : Settings → Branches → règle sur `main`
-      (exiger PR + CI verte avant merge).
-- [ ] Créer la branche **`staging`** (pré-production).
-- [ ] Activer **Dependabot** (déjà configuré via `.github/dependabot.yml`).
+- [ ] **Protéger `main`** : Settings → Branches → règle sur `main` :
+  - exiger une **PR** + **revue** avant merge ;
+  - exiger les **status checks** verts : `CI` (qualité/tests/build/e2e), `CodeQL`,
+    et les jobs `Security` (gitleaks, audit) ;
+  - exiger la branche **à jour** avant merge.
+- [ ] Créer la branche **`staging`** (pré-production) avec la même protection.
+- [ ] Activer **Dependabot** (déjà configuré via `.github/dependabot.yml`) et, dans
+      Settings → Code security, activer **Code scanning (CodeQL)** et **Secret scanning**.
 - [ ] Ajouter les **secrets** (Settings → Secrets and variables → Actions) :
   - `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` (voir §2)
+
+> 🔒 **Déploiement gaté** : le workflow `deploy.yml` ne s'exécute **qu'après une CI
+> verte** (déclenché par `workflow_run`). Un push qui casse la CI ne sera pas déployé.
 
 ## 2. 🟢 Vercel — hébergement
 

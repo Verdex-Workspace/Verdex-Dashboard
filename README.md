@@ -12,6 +12,8 @@ remontées Proton — au même endroit, dans une interface épurée aux couleurs
 <br />
 
 [![CI](https://github.com/Verdex-Workspace/Verdex-Dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/Verdex-Workspace/Verdex-Dashboard/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/Verdex-Workspace/Verdex-Dashboard/actions/workflows/codeql.yml/badge.svg)](https://github.com/Verdex-Workspace/Verdex-Dashboard/actions/workflows/codeql.yml)
+[![Security](https://github.com/Verdex-Workspace/Verdex-Dashboard/actions/workflows/security.yml/badge.svg)](https://github.com/Verdex-Workspace/Verdex-Dashboard/actions/workflows/security.yml)
 [![Deploy](https://github.com/Verdex-Workspace/Verdex-Dashboard/actions/workflows/deploy.yml/badge.svg)](https://github.com/Verdex-Workspace/Verdex-Dashboard/actions/workflows/deploy.yml)
 [![Release](https://github.com/Verdex-Workspace/Verdex-Dashboard/actions/workflows/release.yml/badge.svg)](https://github.com/Verdex-Workspace/Verdex-Dashboard/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-2ee59d.svg)](./LICENSE)

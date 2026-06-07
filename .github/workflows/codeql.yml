@@ -1,0 +1,39 @@
+name: CodeQL
+
+# Analyse statique de sécurité (SAST) du code JavaScript/TypeScript.
+# Résultats visibles dans l'onglet Security → Code scanning.
+on:
+  push:
+    branches: [main, staging, develop]
+  pull_request:
+    branches: [main, staging, develop]
+  schedule:
+    - cron: '32 4 * * 1' # tous les lundis 04:32 UTC
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyse CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Initialisation CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          language: ${{ matrix.language }}
+          queries: security-and-quality
+      - name: Analyse
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.language }}'

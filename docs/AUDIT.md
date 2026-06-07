@@ -61,9 +61,14 @@ modules**, en commençant par la **Cybersécurité**.
 - **RLS** activée sur les tables `tools` / `tickets`.
 - Secrets jamais préfixés `VITE_` ; séparation documentée.
 
-### Écarts à corriger (Phase 1)
+### Écarts à corriger (Phase 1) — ✅ traités
 
-| #   | Écart                                               | Correctif prévu                                                     |
+> Phase 1 livrée : CodeQL, dependency-review, gitleaks et `pnpm audit` ajoutés ;
+> déploiement gaté sur CI verte ; en-têtes de sécurité dans `vercel.json` ;
+> garde-fou méthode sur le serverless. Reste **manuel** : activer la protection de
+> branche `main` côté GitHub (voir `infra-setup.md`).
+
+| #   | Écart                                               | Correctif                                                           |
 | --- | --------------------------------------------------- | ------------------------------------------------------------------- |
 | 1   | Pas de **SAST**                                     | Job **CodeQL** dans la CI                                           |
 | 2   | Pas d'analyse de dépendances sur PR                 | **dependency-review** + `pnpm audit`                                |
