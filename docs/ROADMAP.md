@@ -57,18 +57,18 @@ Détail et justification dans [`docs/AUDIT.md`](./AUDIT.md). Décisions actées 
 Cybersécurité d'abord · connecteurs avec **repli mock** · LLM d'audit = **API Claude**
 · cache prod = **Upstash Redis**.
 
-| Phase | Objectif                                                                          | État        |
-| ----- | --------------------------------------------------------------------------------- | ----------- |
-| 0     | **Audit & cadrage** (AUDIT.md + roadmap)                                          | ✅ fait     |
-| 1     | **Sécurité & CI/CD** (CodeQL, dependency-review, gitleaks, deploy gaté, en-têtes) | ✅ fait     |
-| 2     | **Socle backend & cache** (Upstash Redis, abstraction connecteur, `/api/health`)  | ✅ fait     |
-| 3     | **Cybersécurité** (signaux → API Claude → CVSS → rapport)                         | 🟢 en cours |
-| 4     | **Observabilité** (Prometheus/Loki/Grafana/Traefik)                               | ⏳          |
-| 5     | **Admin / Infra** (Docker, ports, scripts — lecture seule)                        | ⏳          |
-| 6     | **Automations** (connecteur n8n)                                                  | ⏳          |
-| 7     | **Performance & Gains** (Web Vitals, Vercel Analytics)                            | ⏳          |
-| 8     | **Proton Unlimited** (Mail/Calendar/Drive)                                        | ⏳          |
-| 9     | **Finitions** (couverture > 75 %, a11y, i18n, polish)                             | ⏳          |
+| Phase | Objectif                                                                          | État    |
+| ----- | --------------------------------------------------------------------------------- | ------- |
+| 0     | **Audit & cadrage** (AUDIT.md + roadmap)                                          | ✅ fait |
+| 1     | **Sécurité & CI/CD** (CodeQL, dependency-review, gitleaks, deploy gaté, en-têtes) | ✅ fait |
+| 2     | **Socle backend & cache** (Upstash Redis, abstraction connecteur, `/api/health`)  | ✅ fait |
+| 3     | **Cybersécurité** (docs → synthèse IA → audit → CVSS → rapport)                   | ✅ fait |
+| 4     | **Observabilité** (Prometheus/Loki/Grafana/Traefik)                               | ⏳      |
+| 5     | **Admin / Infra** (Docker, ports, scripts — lecture seule)                        | ⏳      |
+| 6     | **Automations** (connecteur n8n)                                                  | ⏳      |
+| 7     | **Performance & Gains** (Web Vitals, Vercel Analytics)                            | ⏳      |
+| 8     | **Proton Unlimited** (Mail/Calendar/Drive)                                        | ⏳      |
+| 9     | **Finitions** (couverture > 75 %, a11y, i18n, polish)                             | ⏳      |
 
 ### Déjà livré (étape 1 « Tickets façon GitHub Projects »)
 

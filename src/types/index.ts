@@ -327,6 +327,20 @@ export interface Vulnerability {
   benefits: string[]
 }
 
+/** Topologie extraite des documents (étape Schémas, en listes). */
+export interface AuditTopology {
+  servers: string[]
+  networks: string[]
+  ports: string[]
+}
+
+/** Synthèse IA des documents (étape Analyse IA). */
+export interface AuditSynthesis {
+  synthesis: string
+  questions: string[]
+  topology: AuditTopology
+}
+
 /** Données du module Cybersécurité. */
 export interface AuditData {
   sources: AuditSource[]
@@ -334,6 +348,11 @@ export interface AuditData {
   checks: AuditCheck[]
   scores: AuditScore[]
   vulnerabilities: Vulnerability[]
+}
+
+/** Document ingéré avec son contenu texte extrait (usage interne pipeline). */
+export interface AuditDocument extends AuditSource {
+  content: string
 }
 
 /** Résultat d'un audit (scores + vulnérabilités) renvoyé par le pipeline. */

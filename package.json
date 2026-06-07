@@ -34,6 +34,7 @@
     "@supabase/supabase-js": "^2.107.0",
     "@upstash/redis": "^1.38.0",
     "@vueuse/core": "^14.3.0",
+    "pdfjs-dist": "^6.0.227",
     "pinia": "^3.0.4",
     "vue": "^3.5.35",
     "vue-i18n": "^11.4.5",

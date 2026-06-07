@@ -1,6 +1,6 @@
 // ============================================================
 // Endpoint d'audit de sécurité : POST /api/audit
-// Pipeline : signaux GitHub → analyse LLM → findings JSON → score CVSS local.
+// Pipeline : synthèse + documents → analyse LLM → findings JSON → score CVSS local.
 // Auth Supabase requise. Sans LLM configuré → { fallback: true } (repli mock côté
 // client). Le score est TOUJOURS recalculé localement depuis le vecteur CVSS.
 // ============================================================
@@ -9,7 +9,6 @@ import { getBearerToken } from './_lib/http'
 import { verifyUser } from './_lib/auth'
 import { withCache } from './_lib/cache'
 import { analyze, isLlmConfigured } from './_lib/llm'
-import { collectSignals } from './_lib/signals'
 import { cvssBaseScore, severityFromScore } from '../src/lib/cvss'
 
 interface RawFinding {
@@ -21,8 +20,9 @@ interface RawFinding {
   benefits: string[]
 }
 
-const SYSTEM = `Tu es un auditeur de sécurité senior. À partir des signaux d'un dépôt
-et des notes fournies, identifie des vulnérabilités plausibles et concrètes.
+const SYSTEM = `Tu es un auditeur de sécurité senior. À partir d'une synthèse
+d'infrastructure et de documents fournis, identifie des vulnérabilités plausibles et
+concrètes.
 Réponds UNIQUEMENT par un tableau JSON (aucun texte autour), chaque élément :
 { "finding": string, "component": string, "cvssVector": "CVSS:3.1/AV:.../AC:.../PR:.../UI:.../S:.../C:.../I:.../A:...", "why": string, "how": string, "benefits": string[] }.
 Le vecteur CVSS v3.1 doit être complet. Maximum 8 findings, du plus grave au moins grave.`
@@ -57,21 +57,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  const body = (req.body ?? {}) as { repo?: string; checks?: string[]; notes?: string }
-  const repo =
-    typeof body.repo === 'string' && /^[\w.-]+\/[\w.-]+$/.test(body.repo) ? body.repo : null
+  const body = (req.body ?? {}) as {
+    synthesis?: string
+    documents?: { name: string; content: string }[]
+    checks?: string[]
+    notes?: string
+  }
+  const synthesis = typeof body.synthesis === 'string' ? body.synthesis.slice(0, 8000) : ''
+  const documents = Array.isArray(body.documents) ? body.documents.slice(0, 20) : []
   const checks = Array.isArray(body.checks) ? body.checks.slice(0, 20) : []
   const notes = typeof body.notes === 'string' ? body.notes.slice(0, 4000) : ''
 
   try {
-    const cacheKey = `audit:${repo ?? 'none'}:${checks.join(',')}:${notes.length}`
+    const cacheKey = `audit:${synthesis.length}:${documents.map((d) => d.name).join(',')}:${checks.join(',')}:${notes.length}`
     const result = await withCache(cacheKey, 300, async () => {
-      const signals = repo ? await collectSignals(repo) : null
+      const corpus = documents
+        .map((d) => `# ${d.name}\n${(d.content ?? '').slice(0, 8_000)}`)
+        .join('\n\n')
       const user = [
-        `Dépôt : ${repo ?? '(non précisé)'}`,
-        `Signaux : ${JSON.stringify(signals)}`,
+        `Synthèse : ${synthesis || '(aucune)'}`,
         `Contrôles demandés : ${checks.join(', ') || '(tous)'}`,
         notes ? `Notes : ${notes}` : '',
+        corpus ? `Documents :\n${corpus}` : '',
       ]
         .filter(Boolean)
         .join('\n')
