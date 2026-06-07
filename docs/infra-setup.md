@@ -20,7 +20,11 @@ Pour que la CI/CD et les déploiements fonctionnent.
   - exiger la branche **à jour** avant merge.
 - [ ] Créer la branche **`staging`** (pré-production) avec la même protection.
 - [ ] Activer **Dependabot** (déjà configuré via `.github/dependabot.yml`) et, dans
-      Settings → Code security, activer **Code scanning (CodeQL)** et **Secret scanning**.
+      Settings → Code security, activer **Dependency graph**, **Code scanning
+      (CodeQL)** et **Secret scanning**.
+  - ℹ️ Le **Dependency graph** est requis par le job `dependency-review` ; tant
+    qu'il n'est pas activé, ce job reste informatif (non bloquant) — la porte
+    bloquante sur les vulnérabilités est assurée par `pnpm audit`.
 - [ ] Ajouter les **secrets** (Settings → Secrets and variables → Actions) :
   - `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` (voir §2)
 
