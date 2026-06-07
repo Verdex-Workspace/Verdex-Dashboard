@@ -203,6 +203,8 @@ export interface Assignee {
   id: string
   name: string
   initials: string
+  /** login GitHub (pour la synchro des assignés d'une issue liée) */
+  githubLogin?: string
 }
 
 /** Étiquette de ticket. */
@@ -216,6 +218,10 @@ export interface Label {
 export interface LinkedRef {
   id: string
   label: string
+  /** dépôt complet `owner/name` (issues créées depuis le dashboard — pour la synchro) */
+  repo?: string
+  /** numéro d'issue/PR GitHub (cible de la synchro) */
+  number?: number
 }
 
 /**
@@ -271,14 +277,10 @@ export interface GanttTask {
   critical: boolean
 }
 
-/** Données du module Ticketing. */
+/** Données du module Ticketing (roadmap/gantt sont dérivés des tickets, cf. derive.ts). */
 export interface TicketingData {
   tickets: Ticket[]
   assignees: Assignee[]
-  roadmap: RoadmapItem[]
-  gantt: GanttTask[]
-  months: string[]
-  weeks: string[]
 }
 
 /* ============================================================

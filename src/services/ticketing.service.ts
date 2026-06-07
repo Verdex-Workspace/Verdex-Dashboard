@@ -8,7 +8,7 @@ import type {
   TicketStatus,
   TicketType,
 } from '@/types'
-import { ASSIGNEES, GANTT, MONTHS, ROADMAP, TICKETS, WEEKS } from '@/data/mock/ticketing'
+import { ASSIGNEES, TICKETS } from '@/data/mock/ticketing'
 import { supabase } from '@/lib/supabase'
 
 /**
@@ -16,8 +16,8 @@ import { supabase } from '@/lib/supabase'
  *
  * - Supabase configuré → table `tickets` (lecture/écriture, RLS).
  * - Sinon (démo/CI) → données mock.
- * Les visualisations roadmap/gantt et la liste des assignés restent mock pour
- * l'instant (données dérivées / statiques).
+ * La liste des assignés reste statique ; roadmap/gantt sont dérivés des tickets
+ * (cf. `src/views/ticketing/derive.ts`).
  */
 function delay<T>(value: T, ms = 120): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(value), ms))
@@ -25,10 +25,6 @@ function delay<T>(value: T, ms = 120): Promise<T> {
 
 const STATIC = {
   assignees: ASSIGNEES,
-  roadmap: ROADMAP,
-  gantt: GANTT,
-  months: MONTHS,
-  weeks: WEEKS,
 }
 
 interface TicketRow {

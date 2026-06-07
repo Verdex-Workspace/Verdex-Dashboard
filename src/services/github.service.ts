@@ -44,7 +44,24 @@ export async function fetchGithubDetail(repo: string): Promise<GithubDetail | nu
   }
 }
 
-export type GithubWriteAction = 'issue' | 'label' | 'milestone' | 'release' | 'close-issue'
+export type GithubWriteAction =
+  | 'issue'
+  | 'label'
+  | 'milestone'
+  | 'release'
+  | 'close-issue'
+  | 'update-issue'
+
+/** Champs synchronisables vers une issue GitHub liée. */
+export interface IssueUpdate {
+  title?: string
+  body?: string
+  state?: 'open' | 'closed'
+  labels?: string[]
+  assignees?: string[]
+  /** titre du jalon (résolu côté serveur en numéro ; `null` efface). */
+  milestoneTitle?: string | null
+}
 
 export interface GithubWriteResult {
   ok: boolean
@@ -72,4 +89,13 @@ export async function githubWrite(
 /** Ferme une issue GitHub (l'API ne permet pas la suppression). */
 export async function closeGithubIssue(repo: string, number: number): Promise<GithubWriteResult> {
   return githubWrite(repo, 'close-issue', { number })
+}
+
+/** Met à jour une issue GitHub existante (état/labels/assignés/jalon/titre/corps). */
+export async function updateGithubIssue(
+  repo: string,
+  number: number,
+  update: IssueUpdate,
+): Promise<GithubWriteResult> {
+  return githubWrite(repo, 'update-issue', { number, ...update })
 }

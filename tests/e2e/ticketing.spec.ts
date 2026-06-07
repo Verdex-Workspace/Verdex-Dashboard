@@ -22,7 +22,7 @@ test.describe('Ticketing', () => {
     await expect(page.getByText('ÉCHÉANCE')).toBeVisible()
 
     await tabs.getByRole('tab', { name: 'Roadmap' }).click()
-    await expect(page.getByText('Intégration Proton')).toBeVisible()
+    await expect(page.getByText('v1.2', { exact: true })).toBeVisible()
 
     await tabs.getByRole('tab', { name: 'Gantt' }).click()
     await expect(page.getByText('chemin critique')).toBeVisible()

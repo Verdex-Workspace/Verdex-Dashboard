@@ -76,3 +76,36 @@ describe('closeGithubIssue', () => {
     expect(r.number).toBe(3)
   })
 })
+
+describe('updateGithubIssue', () => {
+  it('envoie le payload update-issue et renvoie le résultat', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ ok: true, url: 'https://gh/x/4', number: 4, name: null }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const { updateGithubIssue } = await import('@/services/github.service')
+    const r = await updateGithubIssue('o/r', 4, {
+      state: 'closed',
+      labels: ['backend'],
+      milestoneTitle: 'v1.2',
+      assignees: ['CocoDevAI'],
+    })
+    expect(r.number).toBe(4)
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    expect(body.action).toBe('update-issue')
+    expect(body.payload).toMatchObject({ number: 4, state: 'closed', milestoneTitle: 'v1.2' })
+  })
+
+  it("lève avec le message d'erreur GitHub", async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        json: () => Promise.resolve({ error: 'Not Found' }),
+      }),
+    )
+    const { updateGithubIssue } = await import('@/services/github.service')
+    await expect(updateGithubIssue('o/r', 9, { state: 'open' })).rejects.toThrow('Not Found')
+  })
+})

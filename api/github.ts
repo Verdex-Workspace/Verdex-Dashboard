@@ -88,6 +88,36 @@ const WRITE_PATHS: Record<string, (repo: string) => string> = {
   release: (r) => `/repos/${r}/releases`,
 }
 
+/**
+ * Résout un titre de jalon en numéro GitHub (l'API issue attend un `number`).
+ * Cherche parmi les milestones existants, en crée un si absent.
+ * Renvoie `null` pour un titre vide (efface le jalon), `undefined` si la
+ * résolution échoue (le champ sera alors omis du PATCH, pour ne rien effacer).
+ */
+async function resolveMilestone(
+  repo: string,
+  title: string | null | undefined,
+): Promise<number | null | undefined> {
+  if (!title) return null
+  try {
+    const list = await gh<{ number: number; title: string }[]>(
+      `/repos/${repo}/milestones?state=all&per_page=100`,
+    )
+    const found = list?.find((m) => m.title === title)
+    if (found) return found.number
+    const res = await fetch(`${API}/repos/${repo}/milestones`, {
+      method: 'POST',
+      headers: { ...ghHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+    })
+    if (!res.ok) return undefined
+    const created = (await res.json()) as { number?: number }
+    return typeof created.number === 'number' ? created.number : undefined
+  } catch {
+    return undefined
+  }
+}
+
 /** Crée une ressource GitHub (issue, label, milestone, release) ou ferme une issue. */
 async function writeAction(body: unknown, res: VercelResponse) {
   const b = (body ?? {}) as { repo?: string; action?: string; payload?: Record<string, unknown> }
@@ -108,6 +138,50 @@ async function writeAction(body: unknown, res: VercelResponse) {
         method: 'PATCH',
         headers: { ...ghHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ state: 'closed' }),
+      })
+      const data = (await r.json()) as Record<string, unknown>
+      if (!r.ok) {
+        res.status(r.status).json({ error: (data?.message as string) ?? 'github error' })
+        return
+      }
+      res.status(200).json({ ok: true, url: data.html_url ?? null, number: num, name: null })
+    } catch {
+      res.status(502).json({ error: 'github unreachable' })
+    }
+    return
+  }
+
+  // Mise à jour d'une issue existante (PATCH) — synchro depuis un ticket.
+  if (b.action === 'update-issue') {
+    const p = (b.payload ?? {}) as {
+      number?: number
+      title?: string
+      body?: string
+      state?: 'open' | 'closed'
+      labels?: string[]
+      assignees?: string[]
+      milestoneTitle?: string | null
+    }
+    const num = Number(p.number)
+    if (!num) {
+      res.status(400).json({ error: 'missing issue number' })
+      return
+    }
+    const patch: Record<string, unknown> = {}
+    if (typeof p.title === 'string') patch.title = p.title
+    if (typeof p.body === 'string') patch.body = p.body
+    if (p.state === 'open' || p.state === 'closed') patch.state = p.state
+    if (Array.isArray(p.labels)) patch.labels = p.labels
+    if (Array.isArray(p.assignees)) patch.assignees = p.assignees
+    if ('milestoneTitle' in p) {
+      const ms = await resolveMilestone(b.repo, p.milestoneTitle)
+      if (ms !== undefined) patch.milestone = ms // undefined = résolution KO → on n'efface pas
+    }
+    try {
+      const r = await fetch(`${API}/repos/${b.repo}/issues/${num}`, {
+        method: 'PATCH',
+        headers: { ...ghHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
       })
       const data = (await r.json()) as Record<string, unknown>
       if (!r.ok) {
