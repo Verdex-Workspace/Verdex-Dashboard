@@ -10,6 +10,7 @@ export interface HealthStatus {
     supabase: boolean
     redis: boolean
     github: boolean
+    llm: boolean
   }
   timestamp: string
 }

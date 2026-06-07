@@ -2,7 +2,8 @@
 import { computed, markRaw, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { VBars, VBox, VButton, VChip, VFrame, VSheetHeader } from '@/components/ui'
-import { fetchAudit } from '@/services/cyber.service'
+import { fetchAudit, runAudit, saveReport } from '@/services/cyber.service'
+import { fetchTools } from '@/services/projects.service'
 import { useUiStore } from '@/stores/ui'
 import { useDetailStore } from '@/stores/detail'
 import CyberReport from './cyber/CyberReport.vue'
@@ -30,11 +31,22 @@ const data = ref<AuditData | null>(null)
 const loading = ref(true)
 const step = ref(0)
 const running = ref(false)
-const progress = ref(0)
+const auditError = ref('')
+const repos = ref<{ id: string; name: string; repo: string }[]>([])
+const targetRepo = ref('')
+const notes = ref('')
 
 async function load() {
   loading.value = true
-  data.value = await fetchAudit(activeClient.value.id)
+  const [audit, tls] = await Promise.all([
+    fetchAudit(activeClient.value.id),
+    fetchTools(activeClient.value.id),
+  ])
+  data.value = audit
+  repos.value = tls
+    .filter((t) => t.repo)
+    .map((t) => ({ id: t.id, name: t.name, repo: t.repo as string }))
+  targetRepo.value = repos.value[0]?.repo ?? ''
   loading.value = false
 }
 onMounted(load)
@@ -42,17 +54,26 @@ watch(() => activeClient.value.id, load)
 
 const stepKey = computed(() => STEPS[step.value].key.toLowerCase())
 
-function launchAudit() {
+/** Lance un audit réel (repli mock transparent) puis affiche le rapport. */
+async function launchAudit() {
+  if (!data.value) return
   running.value = true
-  progress.value = 0
-  const timer = setInterval(() => {
-    progress.value += 12
-    if (progress.value >= 100) {
-      clearInterval(timer)
-      running.value = false
-      step.value = 4
-    }
-  }, 120)
+  auditError.value = ''
+  try {
+    const checks = data.value.checks.filter((c) => c.enabled).map((c) => c.label)
+    const result = await runAudit({
+      repo: targetRepo.value || null,
+      checks,
+      notes: notes.value,
+    })
+    data.value = { ...data.value, scores: result.scores, vulnerabilities: result.vulnerabilities }
+    await saveReport(result, targetRepo.value || null, activeClient.value.id)
+    step.value = 4
+  } catch (e) {
+    auditError.value = e instanceof Error ? e.message : "L'audit a échoué."
+  } finally {
+    running.value = false
+  }
 }
 
 function openVuln(vulnerability: Vulnerability) {
@@ -64,6 +85,9 @@ function openVuln(vulnerability: Vulnerability) {
     props: { vulnerability },
   })
 }
+
+const selectStyle =
+  'width:100%;border:1.5px solid var(--line);background:var(--paper2);color:var(--ink);font-family:var(--font-mono);font-size:12px;border-radius:8px;padding:8px 10px;outline:none'
 </script>
 
 <template>
@@ -218,28 +242,55 @@ function openVuln(vulnerability: Vulnerability) {
           </div>
         </VFrame>
         <div style="display: flex; flex-direction: column; gap: 12px">
+          <VFrame cap="Cible & contexte" tag="dépôt">
+            <label style="display: flex; flex-direction: column; gap: 5px">
+              <span class="mono" style="font-size: 9.5px; color: var(--muted)"
+                >DÉPÔT À AUDITER</span
+              >
+              <select v-model="targetRepo" :style="selectStyle" aria-label="Dépôt à auditer">
+                <option value="">— aucun (notes uniquement)</option>
+                <option v-for="r in repos" :key="r.id" :value="r.repo">{{ r.repo }}</option>
+              </select>
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 5px; margin-top: 9px">
+              <span class="mono" style="font-size: 9.5px; color: var(--muted)"
+                >NOTES (CONTEXTE)</span
+              >
+              <textarea
+                v-model="notes"
+                rows="3"
+                placeholder="Contexte, périmètre, contraintes…"
+                :style="selectStyle"
+              />
+            </label>
+          </VFrame>
           <VFrame cap="Lancement" tag="scan">
             <div style="text-align: center; padding: 10px 0">
-              <VButton primary @click="launchAudit">⛨ Lancer l'audit complet</VButton>
-              <div class="mono" style="font-size: 10px; color: var(--muted); margin-top: 10px">
-                ≈ 4 min · 312 contrôles
+              <VButton primary @click="launchAudit">{{
+                running ? 'Audit en cours…' : '⛨ Lancer l’audit complet'
+              }}</VButton>
+              <div
+                v-if="running"
+                class="mono"
+                style="font-size: 10.5px; color: var(--muted); margin-top: 10px"
+              >
+                analyse des signaux & rédaction du rapport…
+              </div>
+              <div
+                v-else-if="auditError"
+                class="mono"
+                style="font-size: 10.5px; color: var(--err); margin-top: 10px"
+              >
+                ⚠ {{ auditError }}
+              </div>
+              <div
+                v-else
+                class="mono"
+                style="font-size: 10px; color: var(--muted); margin-top: 10px"
+              >
+                Signaux lecture seule · score CVSS recalculé localement
               </div>
             </div>
-          </VFrame>
-          <VFrame v-if="running" cap="Progression" tag="live">
-            <div style="height: 9px; border-radius: 5px; background: var(--line); overflow: hidden">
-              <div
-                :style="{
-                  width: progress + '%',
-                  height: '100%',
-                  background: 'var(--accent)',
-                  transition: 'width .12s',
-                }"
-              />
-            </div>
-            <span class="mono" style="font-size: 10.5px; color: var(--muted)"
-              >scan en cours… {{ progress }}%</span
-            >
           </VFrame>
         </div>
       </div>

@@ -61,8 +61,8 @@ Cybersécurité d'abord · connecteurs avec **repli mock** · LLM d'audit = **AP
 | ----- | --------------------------------------------------------------------------------- | ----------- |
 | 0     | **Audit & cadrage** (AUDIT.md + roadmap)                                          | ✅ fait     |
 | 1     | **Sécurité & CI/CD** (CodeQL, dependency-review, gitleaks, deploy gaté, en-têtes) | ✅ fait     |
-| 2     | **Socle backend & cache** (Upstash Redis, abstraction connecteur, `/api/health`)  | 🟢 en cours |
-| 3     | **Cybersécurité** (signaux → API Claude → CVSS → rapport)                         | ⏳          |
+| 2     | **Socle backend & cache** (Upstash Redis, abstraction connecteur, `/api/health`)  | ✅ fait     |
+| 3     | **Cybersécurité** (signaux → API Claude → CVSS → rapport)                         | 🟢 en cours |
 | 4     | **Observabilité** (Prometheus/Loki/Grafana/Traefik)                               | ⏳          |
 | 5     | **Admin / Infra** (Docker, ports, scripts — lecture seule)                        | ⏳          |
 | 6     | **Automations** (connecteur n8n)                                                  | ⏳          |

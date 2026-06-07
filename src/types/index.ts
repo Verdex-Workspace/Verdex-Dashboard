@@ -317,6 +317,8 @@ export interface Vulnerability {
   severity: StatusKind
   severityLabel: string
   cvss: string
+  /** vecteur CVSS v3.1 (source du score, recalculé localement) */
+  cvssVector?: string
   finding: string
   component: string
   /** anatomie du finding (slide-over) */
@@ -332,6 +334,19 @@ export interface AuditData {
   checks: AuditCheck[]
   scores: AuditScore[]
   vulnerabilities: Vulnerability[]
+}
+
+/** Résultat d'un audit (scores + vulnérabilités) renvoyé par le pipeline. */
+export interface AuditResult {
+  scores: AuditScore[]
+  vulnerabilities: Vulnerability[]
+}
+
+/** Rapport d'audit persisté (Supabase `audit_reports`). */
+export interface AuditReport extends AuditResult {
+  id: string
+  repo: string | null
+  createdAt: string
 }
 
 /* ============================================================

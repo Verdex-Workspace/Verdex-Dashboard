@@ -137,12 +137,32 @@ simple est de tout déployer derrière **Traefik** via Docker Compose.
 - ➡️ On définira ensemble la stratégie de remontée réaliste (probablement via un
   petit service intermédiaire).
 
-## 9. ⚪ Cybersécurité (audit IA)
+## 9. 🟡 Cybersécurité (audit IA)
 
-- [ ] Choisir le fournisseur LLM pour l'analyse (ex. API Claude d'Anthropic).
-- [ ] Préparer un espace de stockage pour les rapports (Supabase Storage / Proton
-      Drive).
-- ➡️ À me transmettre : clé API du LLM (secret serveur).
+Le pipeline d'audit (`/api/audit`) collecte des signaux GitHub, fait analyser par un
+**LLM (connecteur compatible OpenAI)**, recalcule le **score CVSS localement** et
+persiste le rapport dans Supabase (`audit_reports`, migration `0008`). Sans LLM
+configuré, repli mock déterministe.
+
+Le connecteur est **agnostique** : GitHub Models (gratuit), Groq, OpenRouter, Mistral,
+OpenAI, ou Ollama (local) — on change de fournisseur via l'env, sans toucher au code.
+
+**Option recommandée — GitHub Models (gratuit)** :
+
+- [ ] Créer un **PAT fine-grained** (Settings → Developer settings → Tokens) avec la
+      permission **`models: read`**.
+- [ ] Choisir un modèle dans le catalogue [github.com/marketplace/models](https://github.com/marketplace/models)
+      — ⚠️ **pas de modèle Anthropic/Claude** dans ce catalogue ; privilégier un modèle
+      de raisonnement (ex. `openai/gpt-4.1`, `deepseek/DeepSeek-R1`).
+- [ ] Appliquer la migration `0008_audit_reports.sql` (`supabase db push`).
+- ➡️ **À mettre dans Vercel** (secrets serveur) :
+  - `LLM_BASE_URL=https://models.github.ai/inference`
+  - `LLM_API_KEY=<votre PAT>`
+  - `LLM_MODEL=<modèle choisi>`
+
+> 🔐 **Confidentialité** : le module audite votre sécurité (il transmet des signaux
+> sur vos dépôts). Vérifiez la politique « données » du fournisseur choisi ; pour une
+> confidentialité maximale, **Ollama (local)** ne fait sortir aucune donnée.
 
 ---
 
@@ -157,7 +177,7 @@ simple est de tout déployer derrière **Traefik** via Docker Compose.
 | URL + token Grafana                 | secret serveur  | ⚪       |
 | URL API Traefik                     | secret serveur  | ⚪       |
 | URL + clé API n8n                   | secret serveur  | ⚪       |
-| Clé API LLM (audit)                 | secret serveur  | ⚪       |
+| `LLM_BASE_URL`/`_API_KEY`/`_MODEL`  | secrets serveur | 🟡       |
 
 > 🔐 **Rappel** : tout ce qui est _secret serveur_ ne doit **jamais** être
 > préfixé `VITE_` ni committé. On le met dans `.env.local` (local) ou dans les
