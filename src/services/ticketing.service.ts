@@ -135,6 +135,20 @@ export async function deleteTicket(id: string): Promise<void> {
   if (error) throw error
 }
 
+/** Met à jour partiellement un ticket (statut, liens PR/issues). */
+export async function updateTicket(
+  id: string,
+  patch: { status?: TicketStatus; linkedIssues?: LinkedRef[]; linkedPrs?: LinkedRef[] },
+): Promise<void> {
+  if (!supabase) throw new Error('Supabase non configuré')
+  const row: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  if (patch.status) row.status = patch.status
+  if (patch.linkedIssues) row.linked_issues = patch.linkedIssues
+  if (patch.linkedPrs) row.linked_prs = patch.linkedPrs
+  const { error } = await supabase.from('tickets').update(row).eq('id', id)
+  if (error) throw error
+}
+
 /** Score de priorisation = impact ÷ effort (recalculé dans la matrice). */
 export function priorityScore(ticket: Pick<Ticket, 'impact' | 'effort'>): number {
   if (ticket.effort <= 0) return ticket.impact
