@@ -1,16 +1,28 @@
 <script setup lang="ts">
 import { computed, markRaw, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { VBox, VChip, VFrame, VIconBox, VSheetHeader, VSpark, VTabs } from '@/components/ui'
-import { fetchTools } from '@/services/projects.service'
+import {
+  VBox,
+  VButton,
+  VChip,
+  VFrame,
+  VIconBox,
+  VSheetHeader,
+  VSpark,
+  VTabs,
+} from '@/components/ui'
+import { fetchTools, untrackRepo } from '@/services/projects.service'
 import { useUiStore } from '@/stores/ui'
 import { useDetailStore } from '@/stores/detail'
+import { useAuthStore } from '@/stores/auth'
 import ToolDetailPanel from './projects/ToolDetailPanel.vue'
+import AddRepoPanel from './projects/AddRepoPanel.vue'
 import type { Environment, StatusKind, Tool } from '@/types'
 
 const ui = useUiStore()
 const { activeClient } = storeToRefs(ui)
 const detail = useDetailStore()
+const auth = useAuthStore()
 
 const ENV_KIND: Record<Environment, StatusKind> = { prod: 'ok', staging: 'warn', dev: 'info' }
 const STATUS_COLOR: Record<string, string> = {
@@ -46,13 +58,33 @@ const counts = computed(() => ({
   dev: tools.value.filter((t) => t.env === 'dev').length,
 }))
 
+async function untrack(tool: Tool) {
+  await untrackRepo(tool.id)
+  tools.value = tools.value.filter((t) => t.id !== tool.id)
+  detail.close()
+}
+
 function openTool(tool: Tool) {
   detail.open({
     icon: tool.icon,
     title: tool.name,
     sub: `${tool.stack} · ${tool.env} · v${tool.version}`,
     component: markRaw(ToolDetailPanel),
-    props: { tool },
+    props: { tool, onUntrack: untrack },
+  })
+}
+
+function openAddRepo() {
+  detail.open({
+    icon: '＋',
+    title: 'Suivre un dépôt',
+    sub: 'GitHub',
+    component: markRaw(AddRepoPanel),
+    props: {
+      onAdded: (tool: Tool) => {
+        if (!tools.value.some((t) => t.id === tool.id)) tools.value = [tool, ...tools.value]
+      },
+    },
   })
 }
 </script>
@@ -102,9 +134,25 @@ function openTool(tool: Tool) {
             "
           />
         </VBox>
+        <VButton v-if="!auth.demoMode" primary @click="openAddRepo">+ suivre un repo</VButton>
       </div>
 
       <p v-if="loading" class="mono" style="color: var(--muted)">Chargement…</p>
+
+      <!-- État vide -->
+      <div
+        v-else-if="!tools.length"
+        style="display: grid; place-items: center; text-align: center; padding: 36px 0"
+      >
+        <div>
+          <div style="font-size: 28px; color: var(--accent)">▤</div>
+          <p style="font-size: 13.5px; margin: 10px 0 4px">Aucun dépôt suivi pour le moment.</p>
+          <p class="mono" style="font-size: 11px; color: var(--muted); margin-bottom: 14px">
+            Reliez vos repositories GitHub pour voir leurs commits, PR, issues et README en réel.
+          </p>
+          <VButton v-if="!auth.demoMode" primary @click="openAddRepo">+ suivre un repo</VButton>
+        </div>
+      </div>
 
       <!-- Grille -->
       <div v-else-if="view === 'grid'" class="grid3">
@@ -194,7 +242,7 @@ function openTool(tool: Tool) {
       </div>
 
       <p
-        v-if="!loading && !filtered.length"
+        v-if="!loading && tools.length && !filtered.length"
         class="mono"
         style="color: var(--muted); padding: 8px 2px"
       >
