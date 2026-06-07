@@ -37,7 +37,8 @@ en page d'aperçu — à compléter).
   création/**suppression**, **état vide**, **édition inline** (statut, priorité, type,
   assigné, milestone, size, estimate, deadline, sprint, **labels** en sélection guidée)
   via `updateTicket` (patch générique), **pont ticket → issue GitHub** (création + lien
-  persistant).
+  persistant) et **synchro auto** des éditions vers l'issue liée (état/labels/milestone/
+  assignés). **Roadmap & Gantt dérivés des tickets réels** (`derive.ts`).
 - Migrations dans `supabase/migrations/` (jusqu'à `0006_tickets.sql`). Appliquer
   via `supabase db push`.
 
@@ -49,18 +50,19 @@ en page d'aperçu — à compléter).
 
 ## 🔜 Prochaines étapes (priorisées)
 
-1. **Champs GitHub complets sur le ticket** (cf. capture GitHub Projects) :
-   **assignés, labels, type, milestone, statut, size, estimate, relations**.
-   - ✅ **Volet A (fait)** : `tickets` étendu (`milestone`/`size`/`estimate`,
-     migration `0007`) + **édition inline** dans `TicketDetailPanel` + `AddTicketPanel`
-     enrichi + `updateTicket` patch générique.
-   - ⏳ **Volet B (à faire)** : **synchro ticket ↔ issue** dans les deux sens
-     (assignés/labels/milestone/état) via `/api/github` (étendre les actions write :
-     `update-issue` → assignees, milestone, state, labels).
+1. ✅ **Champs GitHub complets sur le ticket** (fait).
+   - **Volet A** : `tickets` étendu (`milestone`/`size`/`estimate`, migration `0007`) +
+     **édition inline** dans `TicketDetailPanel` + `AddTicketPanel` enrichi +
+     `updateTicket` patch générique.
+   - **Volet B** : **synchro auto ticket → issue** à chaque édition (état, labels,
+     milestone résolu en numéro, assignés via `githubLogin`, titre/corps) — action write
+     `update-issue` dans `/api/github` + `updateGithubIssue`.
 2. **Reflet automatique multi-vues** : statut/échéance/assigné du ticket pilotent
-   **Kanban** (déjà par statut), **Gantt** & **Roadmap** (dériver des deadlines/sprints
-   réels au lieu du mock), **filtre par assigné** (déjà présent, à brancher sur données réelles).
-   - Rendre roadmap/gantt **data-driven** depuis `tickets` (sprint/deadline) au lieu du mock.
+   les vues.
+   - ✅ **Gantt & Roadmap data-driven** : dérivés des tickets réels (milestones/
+     deadlines, sprints/size) via `src/views/ticketing/derive.ts` — plus de mock.
+   - ⏳ Kanban (déjà par statut) ; **filtre par assigné** déjà présent ; brancher
+     entièrement sur données réelles.
 3. **Drag-and-drop Kanban** → met à jour `status` (`updateTicket`).
 4. **Performance & Gains** : compléter le module (Web Vitals/Lighthouse, Vercel Analytics).
 5. **Connecteur Proton** (Calendar/Drive/Mail + génération de rapports) — backend

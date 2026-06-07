@@ -8,14 +8,10 @@ import {
 } from '@/services/ticketing.service'
 
 describe('ticketing.service', () => {
-  it('renvoie tickets, assignés, roadmap, gantt et axes', async () => {
+  it('renvoie tickets et assignés', async () => {
     const data = await fetchTicketing('me')
     expect(data.tickets.length).toBeGreaterThan(0)
     expect(data.assignees.length).toBeGreaterThan(0)
-    expect(data.roadmap.length).toBeGreaterThan(0)
-    expect(data.gantt.length).toBeGreaterThan(0)
-    expect(data.months.length).toBeGreaterThan(0)
-    expect(data.weeks.length).toBeGreaterThan(0)
   })
 
   it('chaque ticket a un statut et une priorité valides', async () => {
