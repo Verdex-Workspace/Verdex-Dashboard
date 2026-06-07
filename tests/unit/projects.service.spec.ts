@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fetchToolDetail, fetchTools } from '@/services/projects.service'
+import { fetchToolDetail, fetchTools, trackRepo, untrackRepo } from '@/services/projects.service'
 
 describe('projects.service', () => {
   it('fetchTools renvoie la liste des outils', async () => {
@@ -29,5 +29,14 @@ describe('projects.service', () => {
     for (const t of tools) {
       expect(await fetchToolDetail(t.id), `détail manquant pour ${t.id}`).not.toBeNull()
     }
+  })
+})
+
+describe('suivi de dépôts — garde-fous (hors Supabase)', () => {
+  it('trackRepo lève sans Supabase', async () => {
+    await expect(trackRepo('owner/name')).rejects.toThrow()
+  })
+  it('untrackRepo lève sans Supabase', async () => {
+    await expect(untrackRepo('owner/name')).rejects.toThrow()
   })
 })
