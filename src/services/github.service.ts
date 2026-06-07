@@ -44,7 +44,7 @@ export async function fetchGithubDetail(repo: string): Promise<GithubDetail | nu
   }
 }
 
-export type GithubWriteAction = 'issue' | 'label' | 'milestone' | 'release'
+export type GithubWriteAction = 'issue' | 'label' | 'milestone' | 'release' | 'close-issue'
 
 export interface GithubWriteResult {
   ok: boolean
@@ -67,4 +67,9 @@ export async function githubWrite(
   const data = (await res.json().catch(() => ({}))) as GithubWriteResult & { error?: string }
   if (!res.ok) throw new Error(data.error ?? "Échec de l'écriture GitHub")
   return data
+}
+
+/** Ferme une issue GitHub (l'API ne permet pas la suppression). */
+export async function closeGithubIssue(repo: string, number: number): Promise<GithubWriteResult> {
+  return githubWrite(repo, 'close-issue', { number })
 }

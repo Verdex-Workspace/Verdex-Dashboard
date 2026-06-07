@@ -13,7 +13,12 @@ interface RepoOption {
   repo: string
 }
 
-const props = defineProps<{ ticket: Ticket; assignees: Assignee[]; repos?: RepoOption[] }>()
+const props = defineProps<{
+  ticket: Ticket
+  assignees: Assignee[]
+  repos?: RepoOption[]
+  onDelete?: (ticket: Ticket) => void
+}>()
 
 const auth = useAuthStore()
 const assignee = computed(
@@ -61,11 +66,31 @@ const selectStyle =
 <template>
   <div style="display: flex; flex-direction: column; gap: 14px">
     <!-- statut -->
-    <div style="display: flex; gap: 8px; flex-wrap: wrap">
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
       <VChip :kind="TYPE_KIND[ticket.type]">{{ TYPE_LABEL[ticket.type] }}</VChip>
       <VChip :kind="PRIORITY_KIND[ticket.priority]">{{ ticket.priority }}</VChip>
       <VChip :dot="false">{{ STATUS_LABEL[ticket.status] }}</VChip>
       <VChip v-if="ticket.sprint" :dot="false">{{ ticket.sprint }}</VChip>
+      <button
+        v-if="onDelete && !auth.demoMode"
+        type="button"
+        class="mono"
+        style="
+          margin-left: auto;
+          font-size: 10.5px;
+          border: 1px solid var(--line);
+          background: var(--paper2);
+          color: var(--err);
+          border-radius: 8px;
+          padding: 5px 10px;
+          cursor: pointer;
+          white-space: nowrap;
+        "
+        title="Supprimer ce ticket"
+        @click="onDelete(ticket)"
+      >
+        🗑 supprimer
+      </button>
     </div>
 
     <p style="font-size: 13px; line-height: 1.5; margin: 0">{{ ticket.description }}</p>

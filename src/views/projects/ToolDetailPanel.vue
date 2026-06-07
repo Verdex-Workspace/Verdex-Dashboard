@@ -2,10 +2,29 @@
 import { computed, onMounted, ref } from 'vue'
 import { VBar, VBars, VBox, VButton, VChip, VFrame, VKpi, VTabs } from '@/components/ui'
 import { fetchToolDetail } from '@/services/projects.service'
+import { closeGithubIssue } from '@/services/github.service'
+import { useAuthStore } from '@/stores/auth'
 import GithubWriteForm from './GithubWriteForm.vue'
 import type { Environment, StatusKind, Tool, ToolDetail } from '@/types'
 
 const props = defineProps<{ tool: Tool; onUntrack?: (tool: Tool) => void }>()
+
+const auth = useAuthStore()
+const closedIssues = ref<Set<string>>(new Set())
+const closingId = ref<string | null>(null)
+
+async function closeIssue(id: string) {
+  if (!props.tool.repo) return
+  closingId.value = id
+  try {
+    await closeGithubIssue(props.tool.repo, Number(id))
+    closedIssues.value = new Set([...closedIssues.value, id])
+  } catch {
+    // erreur silencieuse (badge inchangé)
+  } finally {
+    closingId.value = null
+  }
+}
 
 const ENV_KIND: Record<Environment, StatusKind> = {
   prod: 'ok',
@@ -207,6 +226,25 @@ onMounted(async () => {
           <span class="mono" style="margin-left: auto; font-size: 10.5px; color: var(--muted)">{{
             i.meta
           }}</span>
+          <VChip v-if="closedIssues.has(i.id)" kind="neutral" :dot="false">fermée</VChip>
+          <button
+            v-else-if="!auth.demoMode && tool.repo"
+            type="button"
+            class="mono"
+            style="
+              font-size: 10px;
+              border: 1px solid var(--line);
+              background: var(--paper2);
+              color: var(--err);
+              border-radius: 7px;
+              padding: 4px 8px;
+              cursor: pointer;
+              white-space: nowrap;
+            "
+            @click="closeIssue(i.id)"
+          >
+            {{ closingId === i.id ? '…' : 'fermer' }}
+          </button>
         </VBox>
       </div>
 
