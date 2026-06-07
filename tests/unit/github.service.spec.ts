@@ -61,3 +61,18 @@ describe('githubWrite', () => {
     await expect(githubWrite('o/r', 'label', { name: '' })).rejects.toThrow('Validation failed')
   })
 })
+
+describe('closeGithubIssue', () => {
+  it("appelle l'endpoint et renvoie le résultat", async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ ok: true, url: 'https://gh/x/3', number: 3, name: null }),
+      }),
+    )
+    const { closeGithubIssue } = await import('@/services/github.service')
+    const r = await closeGithubIssue('o/r', 3)
+    expect(r.number).toBe(3)
+  })
+})
