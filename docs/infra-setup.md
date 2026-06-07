@@ -137,12 +137,16 @@ simple est de tout déployer derrière **Traefik** via Docker Compose.
 - ➡️ On définira ensemble la stratégie de remontée réaliste (probablement via un
   petit service intermédiaire).
 
-## 9. ⚪ Cybersécurité (audit IA)
+## 9. 🟡 Cybersécurité (audit IA)
 
-- [ ] Choisir le fournisseur LLM pour l'analyse (ex. API Claude d'Anthropic).
-- [ ] Préparer un espace de stockage pour les rapports (Supabase Storage / Proton
-      Drive).
-- ➡️ À me transmettre : clé API du LLM (secret serveur).
+Le pipeline d'audit (`/api/audit`) collecte des signaux GitHub, fait analyser par
+**Claude**, recalcule le **score CVSS localement** et persiste le rapport dans la
+table Supabase `audit_reports` (migration `0008`). Sans clé, repli mock déterministe.
+
+- [ ] Créer une clé **API Claude** sur [console.anthropic.com](https://console.anthropic.com).
+- [ ] Appliquer la migration `0008_audit_reports.sql` (`supabase db push`).
+- ➡️ **À me transmettre / à mettre dans Vercel** (secret serveur) : `ANTHROPIC_API_KEY`
+  (et optionnellement `ANTHROPIC_MODEL`).
 
 ---
 
@@ -157,7 +161,7 @@ simple est de tout déployer derrière **Traefik** via Docker Compose.
 | URL + token Grafana                 | secret serveur  | ⚪       |
 | URL API Traefik                     | secret serveur  | ⚪       |
 | URL + clé API n8n                   | secret serveur  | ⚪       |
-| Clé API LLM (audit)                 | secret serveur  | ⚪       |
+| `ANTHROPIC_API_KEY` (audit IA)      | secret serveur  | 🟡       |
 
 > 🔐 **Rappel** : tout ce qui est _secret serveur_ ne doit **jamais** être
 > préfixé `VITE_` ni committé. On le met dans `.env.local` (local) ou dans les
