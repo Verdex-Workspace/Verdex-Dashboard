@@ -261,6 +261,7 @@
     border-radius: 8px;
     cursor: pointer;
     letter-spacing: 0.04em;
+    white-space: nowrap;
     transition: all 0.18s;
   }
   .tabsw button.on {
