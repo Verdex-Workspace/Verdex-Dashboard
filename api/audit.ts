@@ -46,31 +46,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(405).json({ error: 'method not allowed' })
     return
   }
-  if (!(await verifyUser(getBearerToken(req)))) {
-    res.status(401).json({ error: 'unauthorized' })
-    return
-  }
-
-  // Sans LLM configuré, on signale le repli — le client utilisera son mock.
-  if (!isLlmConfigured()) {
-    res
-      .status(200)
-      .json({ fallback: true, reason: 'not_configured', scores: [], vulnerabilities: [] })
-    return
-  }
-
-  const body = (req.body ?? {}) as {
-    synthesis?: string
-    documents?: { name: string; content: string }[]
-    checks?: string[]
-    notes?: string
-  }
-  const synthesis = typeof body.synthesis === 'string' ? body.synthesis.slice(0, 8000) : ''
-  const documents = Array.isArray(body.documents) ? body.documents.slice(0, 20) : []
-  const checks = Array.isArray(body.checks) ? body.checks.slice(0, 20) : []
-  const notes = typeof body.notes === 'string' ? body.notes.slice(0, 4000) : ''
-
+  // Tout est encapsulé : une erreur d'exécution renvoie une raison visible
+  // (jamais de 500 opaque).
   try {
+    if (!(await verifyUser(getBearerToken(req)))) {
+      res.status(401).json({ error: 'unauthorized' })
+      return
+    }
+    // Sans LLM configuré, on signale le repli — le client utilisera son mock.
+    if (!isLlmConfigured()) {
+      res
+        .status(200)
+        .json({ fallback: true, reason: 'not_configured', scores: [], vulnerabilities: [] })
+      return
+    }
+
+    const body = (req.body ?? {}) as {
+      synthesis?: string
+      documents?: { name: string; content: string }[]
+      checks?: string[]
+      notes?: string
+    }
+    const synthesis = typeof body.synthesis === 'string' ? body.synthesis.slice(0, 8000) : ''
+    const documents = Array.isArray(body.documents) ? body.documents.slice(0, 20) : []
+    const checks = Array.isArray(body.checks) ? body.checks.slice(0, 20) : []
+    const notes = typeof body.notes === 'string' ? body.notes.slice(0, 4000) : ''
+
     const cacheKey = `audit:${synthesis.length}:${documents.map((d) => d.name).join(',')}:${checks.join(',')}:${notes.length}`
     const result = await withCache(cacheKey, 300, async () => {
       const corpus = documents
@@ -130,7 +131,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } catch (e) {
     res.status(200).json({
       fallback: true,
-      reason: e instanceof Error ? e.message : 'error',
+      reason: e instanceof Error ? e.message : 'server_error',
       scores: [],
       vulnerabilities: [],
     })

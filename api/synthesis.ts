@@ -38,22 +38,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(405).json({ error: 'method not allowed' })
     return
   }
-  if (!(await verifyUser(getBearerToken(req)))) {
-    res.status(401).json({ error: 'unauthorized' })
-    return
-  }
-  if (!isLlmConfigured()) {
-    res.status(200).json({ fallback: true, reason: 'not_configured' })
-    return
-  }
-
-  const body = (req.body ?? {}) as { documents?: DocIn[]; notes?: string }
-  const documents = Array.isArray(body.documents) ? body.documents.slice(0, 20) : []
-  const notes = typeof body.notes === 'string' ? body.notes.slice(0, 4000) : ''
-
-  // En cas d'échec LLM (rate-limit, parse…), on lève dans le producteur :
-  // withCache ne met alors **rien** en cache et on renvoie la raison réelle.
+  // Tout est encapsulé : une erreur d'exécution renvoie une raison visible
+  // (jamais de 500 opaque). En cas d'échec LLM (rate-limit, parse…), on lève
+  // dans le producteur → withCache ne met rien en cache et on renvoie la raison.
   try {
+    if (!(await verifyUser(getBearerToken(req)))) {
+      res.status(401).json({ error: 'unauthorized' })
+      return
+    }
+    if (!isLlmConfigured()) {
+      res.status(200).json({ fallback: true, reason: 'not_configured' })
+      return
+    }
+
+    const body = (req.body ?? {}) as { documents?: DocIn[]; notes?: string }
+    const documents = Array.isArray(body.documents) ? body.documents.slice(0, 20) : []
+    const notes = typeof body.notes === 'string' ? body.notes.slice(0, 4000) : ''
+
     const key = `synth:${documents.map((d) => d.name).join(',')}:${notes.length}`
     const result = await withCache(key, 300, async () => {
       const corpus = documents
@@ -74,6 +75,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })
     res.status(200).json(result)
   } catch (e) {
-    res.status(200).json({ fallback: true, reason: e instanceof Error ? e.message : 'error' })
+    res.status(200).json({
+      fallback: true,
+      reason: e instanceof Error ? e.message : 'server_error',
+    })
   }
 }
