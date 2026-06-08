@@ -3,10 +3,10 @@
 // Renvoie l'état de l'environnement et la disponibilité (configurée ou non)
 // des services serveur — uniquement des booléens, aucun secret exposé.
 // ============================================================
-import type { VercelRequest, VercelResponse } from './_lib/http'
-import { isSupabaseConfigured } from './_lib/auth'
-import { isCacheConfigured } from './_lib/cache'
-import { isLlmConfigured } from './_lib/llm'
+import type { VercelRequest, VercelResponse } from './_lib/http.js'
+import { isSupabaseConfigured } from './_lib/auth.js'
+import { isCacheConfigured } from './_lib/cache.js'
+import { isLlmConfigured } from './_lib/llm.js'
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {

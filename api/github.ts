@@ -10,9 +10,9 @@
  *
  * Usage : GET /api/github?repo=owner/name  (Authorization: Bearer <supabase access_token>)
  */
-import type { VercelRequest, VercelResponse } from './_lib/http'
-import { getBearerToken } from './_lib/http'
-import { verifyUser } from './_lib/auth'
+import type { VercelRequest, VercelResponse } from './_lib/http.js'
+import { getBearerToken } from './_lib/http.js'
+import { verifyUser } from './_lib/auth.js'
 
 const API = 'https://api.github.com'
 
