@@ -4,11 +4,11 @@
 // suggérées + topologie (serveurs/réseaux/ports). Auth Supabase requise.
 // Sans LLM configuré → { fallback: true } (repli mock côté client).
 // ============================================================
-import type { VercelRequest, VercelResponse } from './_lib/http'
-import { getBearerToken } from './_lib/http'
-import { verifyUser } from './_lib/auth'
-import { withCache } from './_lib/cache'
-import { analyze, isLlmConfigured } from './_lib/llm'
+import type { VercelRequest, VercelResponse } from './_lib/http.js'
+import { getBearerToken } from './_lib/http.js'
+import { verifyUser } from './_lib/auth.js'
+import { withCache } from './_lib/cache.js'
+import { analyze, isLlmConfigured } from './_lib/llm.js'
 
 interface DocIn {
   name: string
