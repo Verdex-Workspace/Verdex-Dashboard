@@ -53,7 +53,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Sans LLM configuré, on signale le repli — le client utilisera son mock.
   if (!isLlmConfigured()) {
-    res.status(200).json({ fallback: true, scores: [], vulnerabilities: [] })
+    res
+      .status(200)
+      .json({ fallback: true, reason: 'not_configured', scores: [], vulnerabilities: [] })
     return
   }
 
@@ -84,7 +86,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .join('\n')
 
       const text = await analyze(SYSTEM, user)
-      const findings = text ? parseFindings(text) : []
+      const findings = parseFindings(text)
+      if (!findings.length) throw new Error('invalid_json')
 
       const vulnerabilities = findings.map((f, i) => {
         const score = cvssBaseScore(f.cvssVector ?? '')
@@ -124,7 +127,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })
 
     res.status(200).json(result)
-  } catch {
-    res.status(502).json({ error: 'audit failed' })
+  } catch (e) {
+    res.status(200).json({
+      fallback: true,
+      reason: e instanceof Error ? e.message : 'error',
+      scores: [],
+      vulnerabilities: [],
+    })
   }
 }

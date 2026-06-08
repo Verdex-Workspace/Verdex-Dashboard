@@ -117,24 +117,37 @@ export interface SynthesisInput {
   notes?: string
 }
 
-/** Synthèse IA des documents ; repli mock si LLM/réseau indisponible. */
-export async function runSynthesis(input: SynthesisInput): Promise<AuditSynthesis> {
+/** Résultat de synthèse + éventuel avertissement (repli mock + raison). */
+export interface SynthesisResult {
+  data: AuditSynthesis
+  warning?: string
+}
+
+/** Synthèse IA des documents ; repli mock + raison si LLM/réseau indisponible. */
+export async function runSynthesis(input: SynthesisInput): Promise<SynthesisResult> {
   try {
     const res = await fetch('/api/synthesis', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
       body: JSON.stringify({ documents: docPayload(input.documents), notes: input.notes }),
     })
-    if (!res.ok) return AUDIT_SYNTHESIS
-    const data = (await res.json()) as Partial<AuditSynthesis> & { fallback?: boolean }
-    if (data.fallback || !data.synthesis) return AUDIT_SYNTHESIS
+    if (!res.ok) return { data: AUDIT_SYNTHESIS, warning: `HTTP ${res.status}` }
+    const body = (await res.json()) as Partial<AuditSynthesis> & {
+      fallback?: boolean
+      reason?: string
+    }
+    if (body.fallback || !body.synthesis) {
+      return { data: AUDIT_SYNTHESIS, warning: body.reason ?? 'indisponible' }
+    }
     return {
-      synthesis: data.synthesis,
-      questions: data.questions ?? [],
-      topology: data.topology ?? AUDIT_SYNTHESIS.topology,
+      data: {
+        synthesis: body.synthesis,
+        questions: body.questions ?? [],
+        topology: body.topology ?? AUDIT_SYNTHESIS.topology,
+      },
     }
   } catch {
-    return AUDIT_SYNTHESIS
+    return { data: AUDIT_SYNTHESIS, warning: 'réseau' }
   }
 }
 
@@ -145,8 +158,14 @@ export interface AuditInput {
   notes?: string
 }
 
-/** Lance l'audit via `/api/audit` ; repli mock si indisponible/non configuré. */
-export async function runAudit(input: AuditInput): Promise<AuditResult> {
+/** Résultat d'audit + éventuel avertissement (repli mock + raison). */
+export interface AuditRunResult {
+  data: AuditResult
+  warning?: string
+}
+
+/** Lance l'audit via `/api/audit` ; repli mock + raison si indisponible. */
+export async function runAudit(input: AuditInput): Promise<AuditRunResult> {
   try {
     const res = await fetch('/api/audit', {
       method: 'POST',
@@ -158,12 +177,17 @@ export async function runAudit(input: AuditInput): Promise<AuditResult> {
         notes: input.notes,
       }),
     })
-    if (!res.ok) return MOCK_RESULT
-    const data = (await res.json()) as Partial<AuditResult> & { fallback?: boolean }
-    if (data.fallback || !data.vulnerabilities?.length) return MOCK_RESULT
-    return { scores: data.scores ?? [], vulnerabilities: data.vulnerabilities }
+    if (!res.ok) return { data: MOCK_RESULT, warning: `HTTP ${res.status}` }
+    const body = (await res.json()) as Partial<AuditResult> & {
+      fallback?: boolean
+      reason?: string
+    }
+    if (body.fallback || !body.vulnerabilities?.length) {
+      return { data: MOCK_RESULT, warning: body.reason ?? 'indisponible' }
+    }
+    return { data: { scores: body.scores ?? [], vulnerabilities: body.vulnerabilities } }
   } catch {
-    return MOCK_RESULT
+    return { data: MOCK_RESULT, warning: 'réseau' }
   }
 }
 

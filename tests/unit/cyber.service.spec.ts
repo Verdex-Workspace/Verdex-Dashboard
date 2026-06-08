@@ -39,8 +39,9 @@ describe('runAudit', () => {
       }),
     )
     const r = await runAudit({ synthesis: 'S', checks: [] })
-    expect(r.vulnerabilities).toHaveLength(1)
-    expect(r.scores[0].value).toBe('88 / 100')
+    expect(r.data.vulnerabilities).toHaveLength(1)
+    expect(r.data.scores[0].value).toBe('88 / 100')
+    expect(r.warning).toBeUndefined()
   })
 
   it('repli mock si fallback=true', async () => {
@@ -52,19 +53,22 @@ describe('runAudit', () => {
       }),
     )
     const r = await runAudit({ checks: [] })
-    expect(r.vulnerabilities.length).toBeGreaterThan(0) // mock
+    expect(r.data.vulnerabilities.length).toBeGreaterThan(0) // mock
+    expect(r.warning).toBeTruthy()
   })
 
   it('repli mock si réponse en erreur', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }))
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 502 }))
     const r = await runAudit({ checks: [] })
-    expect(r.vulnerabilities.length).toBeGreaterThan(0)
+    expect(r.data.vulnerabilities.length).toBeGreaterThan(0)
+    expect(r.warning).toContain('502')
   })
 
   it('repli mock en cas exception réseau', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network')))
     const r = await runAudit({ checks: [] })
-    expect(r.vulnerabilities.length).toBeGreaterThan(0)
+    expect(r.data.vulnerabilities.length).toBeGreaterThan(0)
+    expect(r.warning).toBe('réseau')
   })
 })
 
@@ -84,14 +88,21 @@ describe('runSynthesis', () => {
       }),
     )
     const r = await runSynthesis({ documents: [] })
-    expect(r.synthesis).toBe('Infra exposée.')
-    expect(r.topology.ports).toContain('5432')
+    expect(r.data.synthesis).toBe('Infra exposée.')
+    expect(r.data.topology.ports).toContain('5432')
+    expect(r.warning).toBeUndefined()
   })
 
-  it('repli mock si fallback / erreur', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }))
+  it('repli mock + raison si fallback', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ fallback: true, reason: 'llm_http_429' }),
+      }),
+    )
     const r = await runSynthesis({ documents: [] })
-    expect(r.synthesis.length).toBeGreaterThan(0) // mock AUDIT_SYNTHESIS
-    expect(r.questions.length).toBeGreaterThan(0)
+    expect(r.data.synthesis.length).toBeGreaterThan(0) // mock AUDIT_SYNTHESIS
+    expect(r.warning).toBe('llm_http_429')
   })
 })

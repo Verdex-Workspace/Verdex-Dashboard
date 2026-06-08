@@ -37,6 +37,8 @@ const uploading = ref(false)
 const analyzing = ref(false)
 const running = ref(false)
 const auditError = ref('')
+const synthWarning = ref('')
+const auditWarning = ref('')
 const notes = ref('')
 
 async function load() {
@@ -77,7 +79,9 @@ async function removeDoc(doc: AuditDocument) {
 async function analyze() {
   analyzing.value = true
   try {
-    synthesis.value = await runSynthesis({ documents: documents.value, notes: notes.value })
+    const r = await runSynthesis({ documents: documents.value, notes: notes.value })
+    synthesis.value = r.data
+    synthWarning.value = r.warning ?? ''
   } finally {
     analyzing.value = false
   }
@@ -90,12 +94,14 @@ async function launchAudit() {
   auditError.value = ''
   try {
     const checks = data.value.checks.filter((c) => c.enabled).map((c) => c.label)
-    const result = await runAudit({
+    const r = await runAudit({
       synthesis: synthesis.value?.synthesis,
       documents: documents.value,
       checks,
       notes: notes.value,
     })
+    const result = r.data
+    auditWarning.value = r.warning ?? ''
     data.value = { ...data.value, scores: result.scores, vulnerabilities: result.vulnerabilities }
     await saveReport(
       result,
@@ -253,9 +259,22 @@ const fieldStyle =
       <!-- 1 · Analyse IA -->
       <div v-else-if="step === 1" class="grid2">
         <VFrame cap="Synthèse IA" tag="synthèse">
-          <p v-if="synthesis" style="font-size: 12.5px; line-height: 1.6; margin: 0">
-            {{ synthesis.synthesis }}
-          </p>
+          <template v-if="synthesis">
+            <p style="font-size: 12.5px; line-height: 1.6; margin: 0">{{ synthesis.synthesis }}</p>
+            <p
+              v-if="synthWarning"
+              class="mono"
+              style="font-size: 10px; color: var(--warn); margin-top: 10px"
+            >
+              ⚠ IA indisponible ({{ synthWarning }}) — synthèse de démonstration. Relancez «
+              Analyser ».
+            </p>
+            <div style="margin-top: 10px">
+              <VButton @click="analyze">{{
+                analyzing ? 'Analyse…' : 'Relancer l’analyse'
+              }}</VButton>
+            </div>
+          </template>
           <div v-else style="text-align: center; padding: 6px 0">
             <VButton primary @click="analyze">{{
               analyzing ? 'Analyse…' : 'Analyser les documents'
@@ -367,6 +386,13 @@ const fieldStyle =
                 style="font-size: 10.5px; color: var(--err); margin-top: 10px"
               >
                 ⚠ {{ auditError }}
+              </div>
+              <div
+                v-else-if="auditWarning"
+                class="mono"
+                style="font-size: 10.5px; color: var(--warn); margin-top: 10px"
+              >
+                ⚠ IA indisponible ({{ auditWarning }}) — rapport de démonstration.
               </div>
               <div
                 v-else

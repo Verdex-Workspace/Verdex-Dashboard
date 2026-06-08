@@ -152,8 +152,13 @@ OpenAI, ou Ollama (local) — on change de fournisseur via l'env, sans toucher a
 - [ ] Créer un **PAT fine-grained** (Settings → Developer settings → Tokens) avec la
       permission **`models: read`**.
 - [ ] Choisir un modèle dans le catalogue [github.com/marketplace/models](https://github.com/marketplace/models)
-      — ⚠️ **pas de modèle Anthropic/Claude** dans ce catalogue ; privilégier un modèle
-      de raisonnement (ex. `openai/gpt-4.1`, `deepseek/DeepSeek-R1`).
+      — ⚠️ **pas de modèle Anthropic/Claude** dans ce catalogue.
+  - ✅ **Recommandé : `openai/gpt-4.1`** (rapide, JSON fiable, limite de débit confortable).
+  - ⚠️ **`deepseek/DeepSeek-R1`** fonctionne mais c'est un modèle « reasoning » :
+    sur le tier gratuit GitHub Models il est **limité à ~1 requête/minute** et son
+    raisonnement consomme des tokens — notre pipeline fait **2 appels** (synthèse +
+    audit), il faut donc espacer, sinon le 2ᵉ est _rate-limité_ (repli mock affiché
+    avec la raison). `LLM_MAX_TOKENS` est réglable (défaut 4096).
 - [ ] Appliquer les migrations `0008_audit_reports.sql` **et** `0009_audit_documents.sql`
       (`supabase db push`) — `0009` crée aussi le **bucket Storage privé `audit-docs`**
       pour les documents fournis (le texte extrait est analysé par le LLM).
