@@ -43,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
   if (!isLlmConfigured()) {
-    res.status(200).json({ fallback: true })
+    res.status(200).json({ fallback: true, reason: 'not_configured' })
     return
   }
 
@@ -51,6 +51,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const documents = Array.isArray(body.documents) ? body.documents.slice(0, 20) : []
   const notes = typeof body.notes === 'string' ? body.notes.slice(0, 4000) : ''
 
+  // En cas d'échec LLM (rate-limit, parse…), on lève dans le producteur :
+  // withCache ne met alors **rien** en cache et on renvoie la raison réelle.
   try {
     const key = `synth:${documents.map((d) => d.name).join(',')}:${notes.length}`
     const result = await withCache(key, 300, async () => {
@@ -59,10 +61,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .join('\n\n')
       const user = [notes ? `Notes : ${notes}` : '', 'Documents :', corpus || '(aucun)'].join('\n')
       const text = await analyze(SYSTEM, user)
-      const parsed = text
-        ? parseJson<{ synthesis: string; questions: string[]; topology: unknown }>(text)
-        : null
-      if (!parsed) return { fallback: true }
+      const parsed = parseJson<{ synthesis: string; questions: string[]; topology: unknown }>(text)
+      if (!parsed) throw new Error('invalid_json')
       const t = (parsed.topology ?? {}) as Record<string, unknown>
       const arr = (v: unknown) => (Array.isArray(v) ? (v as string[]) : [])
       return {
@@ -73,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     })
     res.status(200).json(result)
-  } catch {
-    res.status(502).json({ error: 'synthesis failed' })
+  } catch (e) {
+    res.status(200).json({ fallback: true, reason: e instanceof Error ? e.message : 'error' })
   }
 }
